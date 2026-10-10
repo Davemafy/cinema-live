@@ -1,5 +1,5 @@
 """CINEMA temporary Kaggle image-to-video job worker. First-frame conditioning only."""
-import hmac, io, os, queue, re, secrets, subprocess, threading, time
+import hmac, io, os, queue, re, secrets, subprocess, threading, time, sys
 from hashlib import sha256
 from pathlib import Path
 from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
@@ -182,6 +182,58 @@ def generate():
         finally:
             Q.task_done()
 
+def smoke_test():
+    """One optional GPU render: check quality before deploying the website."""
+    import requests
+    say("SELFTEST: waiting for model weights")
+    for _ in range(180):
+        if MODEL_STATE == "ready": break
+        if MODEL_STATE == "failed":
+            say("SELFTEST ABORTED: model could not load")
+            return
+        time.sleep(2)
+    else:
+        say("SELFTEST ABORTED: model loading timeout")
+        return
+    try:
+        say("SELFTEST: downloading CINEMA sample performance")
+        source = requests.get(
+            "https://raw.githubusercontent.com/Davemafy/cinema-live/main/public/demo-performance.mp4",
+            timeout=45,
+        )
+        source.raise_for_status()
+        response = requests.post(
+            "http://127.0.0.1:8000/v1/jobs",
+            headers={"Authorization": "Bearer " + TOKEN},
+            files={"video": ("demo-performance.mp4", source.content, "video/mp4")},
+            data={"prompt": "Restyle the supplied person performing their original motions into a classic film-noir performance: black and white, sculpted side light, deep shadows, visible film grain, natural anatomy, continuous single take, stable camera, preserve original movement and subject."},
+            timeout=30,
+        )
+        response.raise_for_status()
+        jid = response.json()["id"]
+        say("SELFTEST: job " + jid + " accepted; waiting for Kaggle GPU")
+        for _ in range(360):
+            time.sleep(5)
+            with LOCK:
+                job = dict(JOBS[jid])
+            if job["state"] == "succeeded":
+                probe = subprocess.run(
+                    ["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=width,height,r_frame_rate,nb_frames",
+                     "-of", "default=noprint_wrappers=1", str(ROOT / (jid + ".mp4"))],
+                    capture_output=True, text=True, timeout=20,
+                )
+                say("SELFTEST SUCCEEDED / " + str(job["inferenceSeconds"]) + " seconds")
+                say("SELFTEST VIDEO DATA: " + " ".join(probe.stdout.splitlines()))
+                say("SELFTEST RESULT VIDEO: " + str(signed_url(jid)))
+                say("WATCH THIS RESULT BEFORE DEPLOYING VERCEL")
+                return
+            if job["state"] == "failed":
+                say("SELFTEST FAILED: " + str(job["error"]))
+                return
+        say("SELFTEST TIMED OUT: wait and inspect notebook logs")
+    except Exception as exc:
+        say("SELFTEST ERROR: " + str(exc)[:350])
+
 def main():
     import requests, uvicorn
     say("STARTING CINEMA TEMPORARY KAGGLE API")
@@ -218,6 +270,8 @@ def main():
             say("HEALTH: " + URL + "/health")
             say("IMPORTANT: EXPERIMENTAL VIDEO-TO-VIDEO CONDITIONING; MOTION FIDELITY IS NOT GUARANTEED")
             threading.Thread(target=warm, daemon=True).start()
+            if "--selftest" in sys.argv:
+                threading.Thread(target=smoke_test, daemon=True).start()
         elif "error" in line.lower() or "failed" in line.lower():
             say("TUNNEL: " + line.strip()[:240])
     raise RuntimeError("Tunnel exited: " + str(tunnel.wait()))
