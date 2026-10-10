@@ -3,7 +3,7 @@ import { AppError } from './errors';
 import { sign, trustedMediaUrl } from './security';
 import type { NormalizedVideo } from './video';
 
-export const KAGGLE_MODEL = 'kaggle/ltx-image-conditioned-2b';
+export const KAGGLE_MODEL = 'kaggle/ltx-video-conditioned-2b';
 
 function connection() {
   // One private Vercel URL is enough for the demo:
@@ -35,10 +35,10 @@ export function kaggleReady() {
 }
 
 function promptFor(treatmentId: string): string {
-  // LTX 2B conditions on one extracted frame, NOT on all source frames.
-  // Deliberately avoid claims about preserving action timing/motion.
+  // LTX 2B now conditions on sampled frames from the supplied source video.
+  // Motion fidelity is not guaranteed at this small model/compute budget.
   if (treatmentId === 'noir') {
-    return 'Animate the person and surroundings from the reference frame as a single continuous black-and-white cinematic shot. Classic silver-screen film noir, sculpted side lighting, rich detailed shadows, physically plausible natural motion, subtle 35mm film grain. Preserve the main subject, architecture and composition. No additional people, no cuts, no morphing, no captions.';
+    return 'Restyle this supplied performance as a single continuous 1940s film-noir shot. Black-and-white monochrome. Preserve the original subject, camera framing, position, movement direction, and action timing. Sculpted side lighting, deep detailed shadows, crisp chiaroscuro, soft film grain, natural faces and hands. No additional people, no new actions, no scene cuts, no morphing, no text.';
   }
   const item = TREATMENTS.find(t => t.id === treatmentId);
   if (!item) throw new AppError(400, 'Unknown treatment.');
@@ -70,8 +70,8 @@ export async function submitKaggle(video: NormalizedVideo, treatmentId: string):
   if (!queued.id || !/^[0-9a-f]{24}$/.test(queued.id)) throw new AppError(502, 'Kaggle returned an invalid job identifier.');
   const createdAt = Date.now();
   const config: Record<string, unknown> = {
-    provider: 'kaggle', conditioning: 'first-frame-only', width: 384, height: 256,
-    num_frames: 17, prompt, sample_steps: 12,
+    provider: 'kaggle', conditioning: 'source-video-frames', width: 384, height: 256,
+    num_frames: 49, prompt, sample_steps: 20, denoise_strength: 0.58,
   };
   const job: Omit<Job, 'token'> = {
     id: queued.id, state: 'queued', createdAt, treatment: treatmentId as TreatmentId,
