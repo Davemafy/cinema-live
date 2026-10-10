@@ -47,8 +47,21 @@ export function verify<T extends { expires: number }>(token: string): T {
 }
 export function trustedMediaUrl(value: string) {
   const u = new URL(value);
-  if (u.protocol !== 'https:' || u.username || u.password || u.port || !(u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media'))) {
-    throw new AppError(502, 'The model returned an unsupported media address.');
+  const falAllowed = u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media');
+  let kaggleAllowed = false;
+  try {
+    const configured = process.env.CINEMA_KAGGLE_URL;
+    if (configured) {
+      const backend = new URL(configured);
+      kaggleAllowed =
+        u.origin === backend.origin &&
+        /^\\/v1\\/jobs\\/[0-9a-f]{24}\\/video$/.test(u.pathname) &&
+        /^\\d{9,12}$/.test(u.searchParams.get('e') || '') &&
+        /^[0-9a-f]{64}$/.test(u.searchParams.get('s') || '');
+    }
+  } catch { /* Invalid configuration must never open another host. */ }
+  if (u.protocol !== 'https:' || u.username || u.password || u.port || !(falAllowed || kaggleAllowed)) {
+    throw new AppError(502, 'The inference provider returned an unsupported media address.');
   }
   return u.href;
 }
