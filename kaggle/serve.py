@@ -139,6 +139,15 @@ def load():
         say("MODEL READY: SOURCE-VIDEO CONDITIONING")
         return PIPE
 
+def warm():
+    """Preload the video pipeline and expose load errors immediately."""
+    global MODEL_STATE
+    try:
+        load()
+    except Exception as exc:
+        MODEL_STATE = "failed"
+        say("MODEL LOAD FAILED: " + str(exc)[:600])
+
 def generate():
     global MODEL_STATE
     while True:
