@@ -1,4 +1,4 @@
-import { MODEL as FAL_MODEL, TREATMENTS, type Job, type TreatmentId } from '@/lib/contracts';
+import { TREATMENTS, type Job, type TreatmentId } from '@/lib/contracts';
 import { AppError } from './errors';
 import { sign, trustedMediaUrl } from './security';
 import type { NormalizedVideo } from './video';
@@ -6,14 +6,23 @@ import type { NormalizedVideo } from './video';
 export const KAGGLE_MODEL = 'kaggle/ltx-image-conditioned-2b';
 
 function connection() {
-  const origin = process.env.CINEMA_KAGGLE_URL?.trim().replace(/\/$/, '');
-  const token = process.env.CINEMA_KAGGLE_TOKEN?.trim();
-  if (!origin || !token || token.length < 32) {
-    throw new AppError(503, 'Kaggle connection is not configured. Set CINEMA_KAGGLE_URL and CINEMA_KAGGLE_TOKEN.');
+  // One private Vercel URL is enough for the demo:
+  // https://KAGGLE_BEARER_TOKEN@random.trycloudflare.com
+  // Never make this a NEXT_PUBLIC_ variable or copy it into a browser URL.
+  const raw = process.env.CINEMA_KAGGLE_URL?.trim();
+  if (!raw) throw new AppError(503, 'Kaggle backend URL is not configured.');
+  let url: URL;
+  try { url = new URL(raw); }
+  catch { throw new AppError(503, 'Kaggle backend URL is invalid.'); }
+  const token = process.env.CINEMA_KAGGLE_TOKEN?.trim() || decodeURIComponent(url.username);
+  if (!token || token.length < 32) {
+    throw new AppError(503, 'Use https://YOUR_KAGGLE_API_TOKEN@YOUR_TUNNEL.trycloudflare.com as the private server-side URL.');
   }
-  const url = new URL(origin);
-  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.pathname !== '/') {
-    throw new AppError(503, 'Kaggle backend URL must be an HTTPS origin.');
+  if (url.protocol !== 'https:' || url.password || url.port || url.pathname !== '/' || url.search || url.hash) {
+    throw new AppError(503, 'Kaggle URL must be a secure HTTPS origin with its token in the username.');
+  }
+  if (!url.hostname.endsWith('.trycloudflare.com')) {
+    throw new AppError(503, 'The demo worker must be hosted on its Cloudflare Quick Tunnel address.');
   }
   return { origin: url.origin, token };
 }
