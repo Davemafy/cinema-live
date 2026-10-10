@@ -78,7 +78,7 @@ def video(jid: str, e: int, s: str):
         if not job or job["state"] != "succeeded": raise HTTPException(404, "Not ready")
     path = ROOT / (jid + ".mp4")
     if not path.is_file(): raise HTTPException(404, "Missing file")
-    return FileResponse(path, media_type="video/mp4", filename="cinema-" + jid + ".mp4", headers={"Cache-Control": "private, no-store"})
+    return FileResponse(path, media_type="video/mp4", filename="cinema-" + jid + ".mp4", content_disposition_type="inline", headers={"Cache-Control": "private, no-store"})
 
 def load():
     global PIPE, MODEL_STATE
