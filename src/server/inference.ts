@@ -1,3 +1,4 @@
+import { KAGGLE_MODEL, kaggleSelected, kaggleReady, submitKaggle, getKaggleJob } from './kaggle';
 import { fal } from '@fal-ai/client';
 import { randomInt } from 'node:crypto';
 import { MODEL, TREATMENTS, type Job, type TreatmentId } from '@/lib/contracts';
@@ -6,10 +7,12 @@ import { sign, trustedMediaUrl, verify } from './security';
 import type { NormalizedVideo } from './video';
 
 export function readiness() {
-  const reason = !process.env.FAL_KEY ? 'The inference provider is not connected yet.'
+  const isKaggle = kaggleSelected();
+  const providerReady = isKaggle ? kaggleReady() : Boolean(process.env.FAL_KEY);
+  const reason = !providerReady ? (isKaggle ? 'Kaggle worker connection is not configured.' : 'The inference provider is not connected yet.')
     : !process.env.JOB_SIGNING_SECRET || process.env.JOB_SIGNING_SECRET.length < 32 ? 'Job security is not configured.'
     : process.env.INFERENCE_ENABLED !== 'true' ? 'AI rendering is disabled until a compute budget is authorized.' : undefined;
-  return { inferenceAvailable: !reason, model: MODEL, reason, renderCodeRequired: Boolean(process.env.CINEMA_RENDER_CODE) };
+  return { inferenceAvailable: !reason, model: isKaggle ? KAGGLE_MODEL : MODEL, reason, renderCodeRequired: Boolean(process.env.CINEMA_RENDER_CODE) };
 }
 export function requireInference(request?: Request) {
   const health = readiness();
@@ -17,13 +20,14 @@ export function requireInference(request?: Request) {
   if (request && process.env.CINEMA_RENDER_CODE && request.headers.get('x-cinema-render-code') !== process.env.CINEMA_RENDER_CODE) {
     throw new AppError(403, 'Enter the render access code supplied by the project owner.');
   }
-  fal.config({ credentials: process.env.FAL_KEY, retry: { maxRetries: 0 } });
+  if (!kaggleSelected()) fal.config({ credentials: process.env.FAL_KEY, retry: { maxRetries: 0 } });
 }
 type JobClaims = Job & { kind: 'job'; expires: number };
 type ExportClaims = { kind: 'export'; url: string; id: string; expires: number };
 export async function submitVideo(video: NormalizedVideo, treatmentId: string): Promise<Job> {
   const treatment = TREATMENTS.find(t => t.id === treatmentId);
   if (!treatment) throw new AppError(400, 'Choose a supported cinematic treatment.');
+  if (kaggleSelected()) return submitKaggle(video, treatmentId);
   const sourceUrl = trustedMediaUrl(await fal.storage.upload(new File([new Uint8Array(video.bytes)], 'performance.mp4', { type: 'video/mp4' })));
   const config = {
     prompt: treatment.prompt, video_url: sourceUrl, video_strength: 0.7,
@@ -51,7 +55,8 @@ export async function submitVideo(video: NormalizedVideo, treatmentId: string): 
 }
 export async function getJob(token: string): Promise<Job> {
   const claims = verify<JobClaims>(token);
-  if (claims.kind !== 'job' || claims.model !== MODEL || !claims.id) throw new AppError(400, 'Invalid job link.');
+  if (claims.kind !== 'job' || (claims.model !== MODEL && claims.model !== KAGGLE_MODEL) || !claims.id) throw new AppError(400, 'Invalid job link.');
+  if (claims.model === KAGGLE_MODEL) return getKaggleJob(claims, token);
   // Status and export remain accessible if creation is subsequently disabled.
   if (!process.env.FAL_KEY) throw new AppError(503, 'The inference provider is not connected.');
   fal.config({ credentials: process.env.FAL_KEY });
