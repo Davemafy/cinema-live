@@ -17,7 +17,7 @@ main { max-width: 1600px; margin: auto; padding: 0 var(--space-6); }
 .wordmark { font-size: 30px; font-weight: 800; letter-spacing: -.05em; text-decoration: none; display: inline-flex; gap: 8px; align-items: baseline; }
 .wordmark-dot { width: 6px; height: 6px; background: var(--accent); }
 .header-description { color: var(--muted); font-size: 14px; }
-.quiet-link { margin-left: auto; color: var(--muted); font-size: 14px; text-decoration: none; }
+.quiet-link { margin-left: auto; color: var(--muted); font-size: 14px; text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
 .workspace-title { padding: 40px 0 32px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
 .eyebrow { font-size: 11px; letter-spacing: .12em; color: var(--muted); font-weight: 600; margin-bottom: 12px; }
 .workspace-title > p { color: var(--muted); font-size: 14px; }

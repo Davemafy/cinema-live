@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
@@ -23,6 +23,10 @@ test('real FFmpeg pipeline normalizes a portrait WebM, trims duration and preser
     assert.ok(video.duration >= 4.9 && video.duration <= 5.1);
     assert.ok(video.inputDuration > 5.5); assert.equal(video.fps, 24);
     assert.equal(video.bytes.subarray(4, 8).toString(), 'ftyp');
+    const output = join(dir, 'normalized.mp4');
+    await writeFile(output, video.bytes);
+    const { stdout } = await run('/usr/bin/ffprobe', ['-v', 'error', '-show_streams', '-of', 'json', output]);
+    assert.ok(JSON.parse(stdout).streams.some((s: { codec_name: string }) => s.codec_name === 'aac'));
   } finally { await rm(dir, { recursive: true, force: true }); }
 });
 test('HTML, playlists and corrupted files are rejected before decoding', async () => {

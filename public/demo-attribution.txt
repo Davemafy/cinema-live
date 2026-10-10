@@ -1,0 +1,8 @@
+Source performance: Charleston-dance.webm
+Author: ARTSEDGE, The Kennedy Center
+Source: https://commons.wikimedia.org/wiki/File:Charleston-dance.webm
+License: Creative Commons Attribution 3.0 Unported
+https://creativecommons.org/licenses/by/3.0/
+Changes by CINEMA: excerpt at 8–13 seconds, transcoded to H.264 MP4,
+audio removed. This is an INPUT test clip, not an AI-generated result.
+The author does not endorse CINEMA.

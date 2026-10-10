@@ -20,6 +20,7 @@ test('media downloads only permit exact provider storage hosts', () => {
 test('cross-origin mutation is rejected', () => {
   assert.throws(() => sameOrigin(new Request('https://cinema.test/api/jobs', { headers: { Origin: 'https://evil.test' } })));
   assert.doesNotThrow(() => sameOrigin(new Request('https://cinema.test/api/jobs', { headers: { Origin: 'https://cinema.test' } })));
+  assert.doesNotThrow(() => sameOrigin(new Request('http://0.0.0.0:3000/api/jobs', { headers: { Origin: 'http://localhost:3000', Host: 'localhost:3000' } })));
 });
 test('missing inference credentials never creates a fake job', async () => {
   delete process.env.FAL_KEY; delete process.env.INFERENCE_ENABLED;

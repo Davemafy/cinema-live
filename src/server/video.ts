@@ -50,7 +50,7 @@ export async function normalize(file: File): Promise<NormalizedVideo> {
     try {
       await run(ffmpegPath, ['-hide_banner', '-loglevel', 'error', '-nostdin', '-protocol_whitelist', 'file', '-i', input,
         '-t', String(CLIP_SECONDS), '-map', '0:v:0', '-map', '0:a:0?',
-        '-vf', 'scale=w=768:h=768:force_original_aspect_ratio=decrease:force_divisible_by=32,setsar=1,fps=24',
+        '-vf', 'scale=w=768:h=768:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=ceil(iw/32)*32:ceil(ih/32)*32:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24',
         '-c:v', 'libx264', '-preset', 'fast', '-crf', '20', '-maxrate', '2000k', '-bufsize', '4000k', '-pix_fmt', 'yuv420p',
         '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', '-threads', '2', '-y', output], { timeout: 40_000, maxBuffer: 1024 * 1024 });
     } catch { throw new AppError(422, 'Video preprocessing failed. Try recording again or uploading a different clip.'); }

@@ -15,7 +15,13 @@ export function rateLimit(request: Request, kind: string, limit: number) {
 }
 export function sameOrigin(request: Request) {
   const origin = request.headers.get('origin');
-  if (origin && origin !== new URL(request.url).origin) throw new AppError(403, 'Please submit from the CINEMA application.');
+  if (!origin) return;
+  const host = request.headers.get('host') || new URL(request.url).host;
+  let originUrl: URL;
+  try { originUrl = new URL(origin); } catch { throw new AppError(403, 'Please submit from the CINEMA application.'); }
+  // Next can reconstruct request.url with the internal bind address (0.0.0.0).
+  // The host header preserves the actual browser-facing origin.
+  if (!['http:', 'https:'].includes(originUrl.protocol) || originUrl.host !== host) throw new AppError(403, 'Please submit from the CINEMA application.');
 }
 function key() {
   const value = process.env.JOB_SIGNING_SECRET;

@@ -20,11 +20,12 @@ export function useCinema() {
   const active = job?.state === 'queued' || job?.state === 'rendering';
   useEffect(() => {
     alive.current = true;
-    loadSession().then(value => { if (alive.current && value) { setTake(value.take); setJob(value.job); } })
-      .catch(() => { if (alive.current) setStorageWarning('Browser storage is unavailable. Keep this tab open while rendering.'); })
-      .finally(() => { if (alive.current) setLoaded(true); });
-    health().then(setService).catch(() => setError('Could not connect to the service. Check your connection and retry.'));
-    return () => { alive.current = false; };
+    let disposed = false;
+    loadSession().then(value => { if (!disposed && value) { setTake(value.take); setJob(value.job); } })
+      .catch(() => { if (!disposed) setStorageWarning('Browser storage is unavailable. Keep this tab open while rendering.'); })
+      .finally(() => { if (!disposed) setLoaded(true); });
+    health().then(value => { if (!disposed) setService(value); }).catch(() => { if (!disposed) setError('Could not connect to the service. Check your connection and retry.'); });
+    return () => { disposed = true; alive.current = false; };
   }, []);
   useEffect(() => {
     if (!loaded) return;
@@ -34,7 +35,7 @@ export function useCinema() {
     });
   }, [take, job, loaded]);
   useEffect(() => {
-    if (!job || !active) return;
+    if (!job || (!active && refresh === 0)) return;
     let disposed = false;
     let timer: ReturnType<typeof setTimeout>;
     let failures = 0;

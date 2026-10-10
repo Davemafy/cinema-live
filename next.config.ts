@@ -2,6 +2,10 @@ import type { NextConfig } from 'next';
 const config: NextConfig = {
   experimental: { useTypeScriptCli: false },
   serverExternalPackages: ['ffmpeg-static', 'ffprobe-static'],
+  outputFileTracingExcludes: { '/*': [
+    './node_modules/ffprobe-static/bin/darwin/**/*', './node_modules/ffprobe-static/bin/win32/**/*',
+    './node_modules/ffprobe-static/bin/linux/ia32/**/*', './node_modules/ffprobe-static/bin/linux/arm*/**/*',
+  ] },
   outputFileTracingIncludes: {
     '/api/normalize': ['./node_modules/ffmpeg-static/ffmpeg', './node_modules/ffprobe-static/bin/linux/x64/ffprobe'],
     '/api/jobs': ['./node_modules/ffmpeg-static/ffmpeg', './node_modules/ffprobe-static/bin/linux/x64/ffprobe'],
