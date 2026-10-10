@@ -17,25 +17,76 @@ Signed job capabilities avoid a database and keep provider credentials server-si
 UI styling, capture hook, storage, API client, preprocessing and provider adapter
 are separate modules so the forthcoming UI harvest can replace presentation.
 
-## Active blockers
+## Completed functionality
 
-- Genuine inference cannot run without an existing GPU endpoint or FAL_KEY plus
-  explicit spending authorization. Asked for up to USD 5 for verification renders.
-- No UI harvest ZIP received yet; temporary functional interface only.
-- Devpost authenticated submission access has not yet been established.
+- Camera preview, permission errors, five-second MediaRecorder capture, retake,
+  video upload and a licensed human-performance sample.
+- Bounded FFprobe validation and FFmpeg normalization, aspect-ratio preservation,
+  original/normalized playback and download, IndexedDB refresh recovery.
+- Signed asynchronous job capabilities, real provider status handling, retry,
+  comparison and generated export implementation. These inference-dependent paths
+  are implemented but have not been exercised with a genuine generated video.
+- Environment template, installation/model attribution docs and truthful draft
+  Devpost description, judge instructions and demonstration script in submission/.
 
 ## Verified results
 
-- GitHub repository is public and empty; user has admin/push permission.
-- No existing CINEMA Vercel project on connected account/team.
+- Production build and TypeScript checks pass.
+- Seven integration/security tests pass, including real FFmpeg portrait WebM
+  normalization, upload limits, invalid-container rejection and signed capabilities.
+- Local browser checks pass for emulated-camera recording, real performance
+  upload, normalization/playback, source download, refresh recovery, invalid-file
+  recovery, camera denial, and desktop plus 390/320-pixel mobile layouts.
+- Screenshots were inspected. No physical camera has been tested.
 - Official fal schema documents video_url, video_strength, matching duration/FPS,
   queue submit/status/result and MP4 output for the selected endpoint.
 - No inference or transformed performance has been generated or verified.
 
+## Deployment state
+
+- Public repository: https://github.com/Davemafy/cinema-live
+- Vercel project cinema-live was created separately from unrelated applications.
+- Production alias: https://cinema-live-six.vercel.app
+- Deployment dpl_G3EyQyXRjw3Ts2nkiS2ZMZ6GENga reached READY for commit 1bcde11.
+- Server signing secret is configured privately; INFERENCE_ENABLED=false.
+- The deployed browser verification attempt was interrupted. READY does not prove
+  the deployed user journey; production health, preprocessing and browser checks
+  still need completion. AI transformation is unavailable.
+
+## Active blockers and authorization
+
+- The owner declined paid inference and FAL_KEY configuration. Do not request that
+  path again or incur charges. Investigate the existing Lightning AI account's
+  free credits first; Modal Starter is an alternative only within included compute
+  and with no unapproved charges. No GPU/account authorization is currently present
+  in this CPU-only workspace. Lightning SDK is installed in
+  /workspace/.venvs/cinema-infra; secure login and actual credit limits need checking.
+- No UI harvest ZIP received yet; temporary functional interface only.
+- Authenticated Devpost/YouTube access and required team eligibility information
+  have not been established. Draft materials are prepared; nothing is submitted.
+
+## Relevant commands
+
+Run from /workspace/cinema-live:
+
+```sh
+npm run build
+npm run typecheck
+npm test
+npm run verify:browser
+BASE_URL=https://cinema-live-six.vercel.app ARTIFACT_DIR=artifacts/production npm run verify:browser
+git push origin main
+```
+
+scripts/prove-inference.ts is a guarded genuine-inference verification script;
+do not run a paid provider path without authorization. Generated artifacts and
+credentials are ignored by Git.
+
 ## Next concrete action
 
-Implement capture, normalization, provider adapter, signed jobs, comparison and
-export. Build and verify all independently accessible paths. Deploy to a new
-CINEMA Vercel project without changing unrelated applications.
+Complete deployed CPU-path verification, inspect Lightning's secure login/free
+compute availability, and build a reproducible self-hosted inference setup while
+account access is unresolved. Verify a genuine source-conditioned output before
+enabling rendering or claiming the full application is operational.
 
 Deadline supplied: 2026-10-12 03:59 UTC (04:59 WAT).
