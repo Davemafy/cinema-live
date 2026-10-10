@@ -10,6 +10,7 @@ ROOT = Path("/kaggle/working/cinema-worker")
 ROOT.mkdir(parents=True, exist_ok=True)
 TOKEN = os.environ.get("CINEMA_KAGGLE_TOKEN") or secrets.token_urlsafe(32)
 URL = ""
+PORT = 8000
 MODEL_STATE = "starting"
 PIPE = None
 JOBS = {}
@@ -203,7 +204,7 @@ def smoke_test():
         )
         source.raise_for_status()
         response = requests.post(
-            "http://127.0.0.1:8000/v1/jobs",
+            f"http://127.0.0.1:{PORT}/v1/jobs",
             headers={"Authorization": "Bearer " + TOKEN},
             files={"video": ("demo-performance.mp4", source.content, "video/mp4")},
             data={"prompt": "Restyle the supplied person performing their original motions into a classic film-noir performance: black and white, sculpted side light, deep shadows, visible film grain, natural anatomy, continuous single take, stable camera, preserve original movement and subject."},
@@ -235,14 +236,18 @@ def smoke_test():
         say("SELFTEST ERROR: " + str(exc)[:350])
 
 def main():
-    import requests, uvicorn
-    say("STARTING CINEMA TEMPORARY KAGGLE API")
+    import requests, uvicorn, socket
+    global PORT
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        PORT = listener.getsockname()[1]
+    say(f"STARTING CINEMA TEMPORARY KAGGLE API on local port {PORT}")
     threading.Thread(target=generate, daemon=True).start()
-    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=8000, log_level="warning"))
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=PORT, log_level="warning"))
     threading.Thread(target=server.run, daemon=True).start()
     for _ in range(30):
         try:
-            if requests.get("http://127.0.0.1:8000/health", timeout=1).ok: break
+            if requests.get(f"http://127.0.0.1:{PORT}/health", timeout=1).ok: break
         except Exception: time.sleep(1)
     else: raise RuntimeError("FastAPI failed to start")
 
@@ -257,7 +262,7 @@ def main():
         binary.chmod(0o755)
     say("STARTING TUNNEL - Kaggle networking may block this")
     tunnel = subprocess.Popen(
-        [str(binary), "tunnel", "--no-autoupdate", "--protocol", "http2", "--url", "http://127.0.0.1:8000"],
+        [str(binary), "tunnel", "--no-autoupdate", "--protocol", "http2", "--url", f"http://127.0.0.1:{PORT}"],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
     )
     global URL
