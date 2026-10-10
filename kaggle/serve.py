@@ -33,7 +33,7 @@ def signed_url(job_id):
 
 @app.get("/health")
 def health():
-    return {"ok": MODEL_STATE != "failed", "state": MODEL_STATE, "model": "kaggle/ltx-image-conditioned-2b", "conditioning": "first-frame-only", "queued": Q.qsize()}
+    return {"ok": MODEL_STATE != "failed", "state": MODEL_STATE, "model": "kaggle/ltx-video-conditioned-2b", "conditioning": "source-video-frames", "queued": Q.qsize()}
 
 @app.post("/v1/jobs", status_code=202)
 async def submit(video: UploadFile = File(...), prompt: str = Form(...), authorization: str | None = Header(default=None)):
@@ -80,20 +80,62 @@ def video(jid: str, e: int, s: str):
     if not path.is_file(): raise HTTPException(404, "Missing file")
     return FileResponse(path, media_type="video/mp4", filename="cinema-" + jid + ".mp4", content_disposition_type="inline", headers={"Cache-Control": "private, no-store"})
 
+# Quality profile: real source-video conditioning and a longer shot.
+# 49 frames @12 fps = 4.08 seconds. 20 steps; 384x256 for T4 memory.
+WIDTH, HEIGHT, FPS, FRAMES, STEPS = 384, 256, 12, 49, 20
+STRENGTH = 0.58
+
+def read_source_frames(path):
+    """Sample the uploaded clip, retaining its motion for video conditioning."""
+    from PIL import Image
+    frame_bytes = WIDTH * HEIGHT * 3
+    command = [
+        "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin",
+        "-i", path, "-an", "-vf",
+        f"fps={FPS},scale={WIDTH}:{HEIGHT}:force_original_aspect_ratio=decrease:force_divisible_by=2,"
+        f"pad={WIDTH}:{HEIGHT}:(ow-iw)/2:(oh-ih)/2,format=rgb24",
+        "-frames:v", str(FRAMES), "-pix_fmt", "rgb24",
+        "-f", "rawvideo", "pipe:1"
+    ]
+    raw = subprocess.run(command, capture_output=True, timeout=45, check=True).stdout
+    count = len(raw) // frame_bytes
+    if count < 9:
+        raise RuntimeError(f"Video has too few decoded frames: {count}")
+    frames = [
+        Image.frombytes("RGB", (WIDTH, HEIGHT), raw[i * frame_bytes:(i + 1) * frame_bytes])
+        for i in range(min(count, FRAMES))
+    ]
+    while len(frames) < FRAMES:
+        frames.append(frames[-1].copy())
+    return frames
+
+def finish_noir(raw_path, final_path):
+    """Make the requested monochrome grade deterministic, not prompt-dependent."""
+    command = [
+        "ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin",
+        "-i", str(raw_path), "-an",
+        "-vf", "hue=s=0,eq=contrast=1.27:brightness=-0.025,noise=alls=3:allf=t,format=yuv420p",
+        "-c:v", "libx264", "-preset", "medium", "-crf", "19",
+        "-movflags", "+faststart", "-y", str(final_path)
+    ]
+    subprocess.run(command, capture_output=True, timeout=120, check=True)
+
 def load():
     global PIPE, MODEL_STATE
     with LOAD_LOCK:
         if PIPE is not None: return PIPE
         MODEL_STATE = "loading"
-        say("LOADING LTX image-to-video weights (cached if present)")
+        say("LOADING LTX 2B VIDEO-TO-VIDEO PIPELINE (uses existing model weights)")
         import torch
-        from diffusers import LTXImageToVideoPipeline
-        obj = LTXImageToVideoPipeline.from_pretrained("Lightricks/LTX-Video", torch_dtype=torch.float16)
+        from diffusers import LTXConditionPipeline
+        obj = LTXConditionPipeline.from_pretrained(
+            "Lightricks/LTX-Video", torch_dtype=torch.float16
+        )
         obj.enable_model_cpu_offload()
         obj.vae.enable_tiling()
         PIPE = obj
         MODEL_STATE = "ready"
-        say("MODEL READY")
+        say("MODEL READY: SOURCE-VIDEO CONDITIONING")
         return PIPE
 
 def generate():
@@ -105,24 +147,28 @@ def generate():
             with LOCK:
                 job = JOBS[jid]
                 job["state"] = "rendering"
-            frame = subprocess.run(
-                ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-i", job["source"],
-                 "-frames:v", "1", "-f", "image2pipe", "-vcodec", "mjpeg", "pipe:1"],
-                capture_output=True, timeout=30, check=True
-            ).stdout
-            image = ImageOps.fit(Image.open(io.BytesIO(frame)).convert("RGB"), (384, 256))
+            source_frames = read_source_frames(job["source"])
+            say(f"SOURCE VIDEO: {len(source_frames)} frames retained for motion conditioning")
             pipe = load()
             from diffusers.utils import export_to_video
-            say("GENERATING " + jid + " (17 frames / 384x256)")
-            frames = pipe(
-                image=image, prompt=job["prompt"],
-                negative_prompt="blurry, jittery, distorted, artifacts, subtitles, text",
-                height=256, width=384, num_frames=17, num_inference_steps=12,
-                guidance_scale=3.0, decode_timestep=0.05, decode_noise_scale=0.025
-            ).frames[0]
+            say(f"GENERATING {jid}: {FRAMES} frames / {STEPS} steps / strength {STRENGTH}")
+            output = pipe(
+                video=source_frames,
+                prompt=job["prompt"],
+                negative_prompt="color, colored footage, oversaturated, blurry, jitter, anatomy distortions, visual glitches, captions, text",
+                height=HEIGHT, width=WIDTH, num_frames=FRAMES,
+                frame_rate=FPS, num_inference_steps=STEPS,
+                denoise_strength=STRENGTH,
+                guidance_scale=5.0, guidance_rescale=0.7,
+                decode_timestep=0.05, decode_noise_scale=0.025,
+                image_cond_noise_scale=0.025,
+            )
+            raw = ROOT / (jid + ".raw.mp4")
             out = ROOT / (jid + ".mp4")
-            export_to_video(frames, str(out), fps=12)
-            if not out.is_file() or out.stat().st_size < 1000: raise RuntimeError("No MP4 produced")
+            export_to_video(output.frames[0], str(raw), fps=FPS)
+            finish_noir(raw, out)
+            if not out.is_file() or out.stat().st_size < 1000:
+                raise RuntimeError("No MP4 produced")
             with LOCK:
                 job["state"] = "succeeded"
                 job["inferenceSeconds"] = round(time.time() - started, 1)
@@ -135,13 +181,6 @@ def generate():
             say("FAILED " + jid + ": " + str(ex))
         finally:
             Q.task_done()
-
-def warm():
-    global MODEL_STATE
-    try: load()
-    except Exception as exc:
-        MODEL_STATE = "failed"
-        say("LOAD ERROR " + str(exc))
 
 def main():
     import requests, uvicorn
@@ -177,7 +216,7 @@ def main():
             say("PUBLIC URL: " + URL)
             say("API TOKEN (SECRET - configure CINEMA_KAGGLE_TOKEN in Vercel): " + TOKEN)
             say("HEALTH: " + URL + "/health")
-            say("IMPORTANT: FIRST-FRAME CONDITIONING ONLY, NOT FULL VIDEO-TO-VIDEO")
+            say("IMPORTANT: EXPERIMENTAL VIDEO-TO-VIDEO CONDITIONING; MOTION FIDELITY IS NOT GUARANTEED")
             threading.Thread(target=warm, daemon=True).start()
         elif "error" in line.lower() or "failed" in line.lower():
             say("TUNNEL: " + line.strip()[:240])
