@@ -1,6 +1,6 @@
 # CINEMA temporary Kaggle inference backend
 
-This is an **experimental, session-scoped** worker. It is NOT a persistent public hosting service. It uses LTX image-to-video conditioned on the **first frame** of the supplied MP4, not motion-preserving video-to-video. A source video is required; output is a new AI-generated short shot with independent motion.
+This is an **experimental, session-scoped** worker. It now samples multiple frames from the uploaded source and uses Diffusers LTXConditionPipeline to attempt motion-preserving video-to-video editing. Motion fidelity and quality remain unverified until a real GPU render succeeds.
 
 ## Start in your existing Kaggle T4 notebook
 
@@ -62,6 +62,6 @@ One GPU generation runs at a time; at most two can wait. The service holds jobs 
 2. The Kaggle output should eventually show `MODEL READY` before rendering.
 3. On CINEMA Vercel, use **sample performance**, select **Silver screen**, submit.
 4. Verify `queued → rendering → succeeded` and MP4 playback/export, or preserve the actual error details.
-5. Don't claim successful motion preservation: only the first source frame conditions LTX. The original 5-second timing and action are **not** retained.
+5. Validate the output's motion, framing, monochrome look, actual length, and resolution before claiming performance preservation. The model samples video frames at 12 fps, and generates 49 frames (~4.1s).
 
 Kaggle free notebooks can disconnect, have a documented session length of up to 12 hours, and are unsuitable for permanent hosting. Cloudflare Quick Tunnel is intended for development/testing.
