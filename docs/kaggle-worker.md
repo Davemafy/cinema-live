@@ -30,20 +30,22 @@ When the tunnel succeeds, the notebook prints **PUBLIC URL**, **API TOKEN**, and
 
 **Never paste the API token into a public chat, codebase, GitHub file, or NEXT_PUBLIC environment variable.** Place it only in Vercel's server-side environment settings.
 
-## Vercel configuration after merging this PR
+## Vercel: one environment variable
 
-Set (all under Vercel Project → Settings → Environment Variables):
+The Kaggle notebook already printed a **PUBLIC URL** and **API TOKEN**. Create exactly one server-side encrypted environment variable in CINEMA:
 
-```
-CINEMA_KAGGLE_URL=https://YOUR-RANDOM-HOST.trycloudflare.com
-CINEMA_KAGGLE_TOKEN=<API TOKEN FROM KAGGLE>
-JOB_SIGNING_SECRET=<RANDOM VALUE AT LEAST 32 CHARS>
-INFERENCE_ENABLED=true
+```dotenv
+CINEMA_KAGGLE_URL=https://YOUR_KAGGLE_API_TOKEN@YOUR_RANDOM_HOST.trycloudflare.com
 ```
 
-Optional: `CINEMA_RENDER_CODE` to restrict judge/demo renders.
+For the current worker, combine the notebook's original token and its Cloudflare hostname into that ONE URL. Do not share that complete URL, put it in source code, or use `NEXT_PUBLIC_`.
 
-Redeploy CINEMA. Its existing `/api/jobs`, `/api/jobs/status` and `/api/export` routes automatically use Kaggle instead of Fal when `CINEMA_KAGGLE_URL` is configured. The browser never receives the Kaggle API bearer token.
+**No additional env variables are needed:** for this Kaggle-only demo, the backend reads the token from the URL, derives a temporary job signing secret, and activates inference automatically. The existing Fal settings are not used when `CINEMA_KAGGLE_URL` exists.
+
+Deploy the `kaggle-worker-demo` branch manually when ready. Git auto-deploys are disabled in `vercel.json`.
+
+Note: the tunnel hostname changes if Kaggle restarts, so you'll need to update that one URL and manually redeploy. Kaggle cannot guarantee uptime.
+
 
 ## API contract
 
