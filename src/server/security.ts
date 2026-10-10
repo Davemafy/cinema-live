@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { AppError } from './errors';
 
 const buckets = new Map<string, { count: number; until: number }>();
@@ -24,10 +24,25 @@ export function sameOrigin(request: Request) {
   if (!['http:', 'https:'].includes(originUrl.protocol) || originUrl.host !== host) throw new AppError(403, 'Please submit from the CINEMA application.');
 }
 function key() {
-  const value = process.env.JOB_SIGNING_SECRET;
-  if (!value || value.length < 32) throw new AppError(503, 'Job security is not configured on this deployment.');
-  return value;
+  const configured = process.env.JOB_SIGNING_SECRET;
+  if (configured && configured.length >= 32) return configured;
+
+  // Ephemeral Kaggle demo only: the same secret inside the private URL
+  // can back job signing without asking for another env variable.
+  // This is never shipped to clients. Existing configured keys take priority.
+  const raw = process.env.CINEMA_KAGGLE_URL;
+  if (raw) {
+    try {
+      const url = new URL(raw);
+      const token = process.env.CINEMA_KAGGLE_TOKEN?.trim() || decodeURIComponent(url.username);
+      if (url.protocol === 'https:' && token.length >= 32 && url.hostname.endsWith('.trycloudflare.com')) {
+        return createHash('sha256').update('cinema-kaggle-job-signing:' + token).digest('hex');
+      }
+    } catch { /* invalid demo URL */ }
+  }
+  throw new AppError(503, 'Job security is not configured on this deployment.');
 }
+
 export function sign<T extends object>(data: T): string {
   const body = Buffer.from(JSON.stringify({ ...data, expires: Date.now() + 24 * 3600_000 })).toString('base64url');
   return `${body}.${createHmac('sha256', key()).update(body).digest('base64url')}`;
