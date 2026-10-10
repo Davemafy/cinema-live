@@ -1,0 +1,31 @@
+{
+  "name": "cinema-motion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "preview": "vite --host 0.0.0.0",
+    "render": "remotion render src/index.tsx",
+    "prepreview": "python3 sound.py",
+    "build": "vite build --base ./",
+    "prebuild": "python3 sound.py",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@react-three/fiber": "9.2.0",
+    "@remotion/cli": "4.0.406",
+    "@remotion/player": "4.0.406",
+    "@remotion/three": "4.0.406",
+    "gsap": "3.13.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.406",
+    "three": "0.178.0",
+    "vite": "6.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/three": "0.178.0",
+    "typescript": "5.9.3"
+  }
+}
