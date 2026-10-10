@@ -23,10 +23,10 @@ response = requests.get(url, timeout=30)
 response.raise_for_status()
 target.write_bytes(response.content)
 print("STARTING TEMPORARY CINEMA GPU WORKER", flush=True)
-subprocess.run([sys.executable, "-u", str(target)], check=True)
+subprocess.run([sys.executable, "-u", str(target), "--selftest"], check=True)
 ```
 
-When the tunnel succeeds, the notebook prints **PUBLIC URL**, **API TOKEN**, and **HEALTH**. Keep that Kaggle cell/session running. If no tunnel URL appears or it reports port 7844 connection failures, outbound tunnels may be blocked; this route cannot be used in that Kaggle session.
+Stop the previous worker cell before starting the revised worker. Do **not** restart the whole Kaggle session or delete cached model weights. This replacement worker uses a fresh local port and Cloudflare tunnel hostname.\n\nWhen the tunnel succeeds, the notebook prints **PUBLIC URL**, **API TOKEN**, and **HEALTH**. With `--selftest`, it also automatically renders one sample and prints **SELFTEST RESULT VIDEO** after a successful GPU generation. Keep that Kaggle cell/session running. If no tunnel URL appears or it reports port 7844 connection failures, outbound tunnels may be blocked; this route cannot be used in that Kaggle session.
 
 **Never paste the API token into a public chat, codebase, GitHub file, or NEXT_PUBLIC environment variable.** Place it only in Vercel's server-side environment settings.
 
