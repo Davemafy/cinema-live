@@ -9,9 +9,14 @@ import type { NormalizedVideo } from './video';
 export function readiness() {
   const isKaggle = kaggleSelected();
   const providerReady = isKaggle ? kaggleReady() : Boolean(process.env.FAL_KEY);
-  const reason = !providerReady ? (isKaggle ? 'Kaggle worker connection is not configured.' : 'The inference provider is not connected yet.')
-    : !process.env.JOB_SIGNING_SECRET || process.env.JOB_SIGNING_SECRET.length < 32 ? 'Job security is not configured.'
-    : process.env.INFERENCE_ENABLED !== 'true' ? 'AI rendering is disabled until a compute budget is authorized.' : undefined;
+  const secretConfigured = Boolean(process.env.JOB_SIGNING_SECRET && process.env.JOB_SIGNING_SECRET.length >= 32);
+  const reason = !providerReady
+    ? (isKaggle ? 'Set CINEMA_KAGGLE_URL to the private token@tunnel URL.' : 'The inference provider is not connected yet.')
+    : !secretConfigured && !isKaggle ? 'Job security is not configured.'
+    : process.env.INFERENCE_ENABLED !== 'true' && !isKaggle
+      ? 'AI rendering is disabled until a compute budget is authorized.' : undefined;
+  // Kaggle is a free, temporary demo worker. A configured URL alone enables
+  // inference; no paid provider flag or separate signing secret is needed.
   return { inferenceAvailable: !reason, model: isKaggle ? KAGGLE_MODEL : MODEL, reason, renderCodeRequired: Boolean(process.env.CINEMA_RENDER_CODE) };
 }
 export function requireInference(request?: Request) {
