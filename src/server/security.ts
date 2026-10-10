@@ -55,8 +55,8 @@ export function trustedMediaUrl(value: string) {
       const backend = new URL(configured);
       kaggleAllowed =
         u.origin === backend.origin &&
-        /^\\/v1\\/jobs\\/[0-9a-f]{24}\\/video$/.test(u.pathname) &&
-        /^\\d{9,12}$/.test(u.searchParams.get('e') || '') &&
+        /^\/v1\/jobs\/[0-9a-f]{24}\/video$/.test(u.pathname) &&
+        /^\d{9,12}$/.test(u.searchParams.get('e') || '') &&
         /^[0-9a-f]{64}$/.test(u.searchParams.get('s') || '');
     }
   } catch { /* Invalid configuration must never open another host. */ }
