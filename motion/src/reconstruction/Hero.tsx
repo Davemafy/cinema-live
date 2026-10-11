@@ -35,8 +35,8 @@ function solidFilm(){
  }
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(p,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));const welded=mergeVertices(g,.00001);welded.computeVertexNormals();g.dispose();return welded;
 }
-export function Hero({time}:{time:number}){
- const tex=useLoader(THREE.TextureLoader,mediaFile('generated-frame.jpg'));tex.colorSpace=THREE.SRGBColorSpace;
+export function Hero({time,imageFile='generated-frame.jpg',photographic=false}:{time:number,imageFile?:string,photographic?:boolean}){
+ const tex=useLoader(THREE.TextureLoader,mediaFile(imageFile));tex.colorSpace=THREE.SRGBColorSpace;
  const geometry=useMemo(solidFilm,[]);
  const material=useMemo(()=>{
   const m=new THREE.MeshPhysicalMaterial({color:'#99713d',metalness:.64,roughness:.23,clearcoat:1,clearcoatRoughness:.12,side:THREE.DoubleSide});
@@ -49,20 +49,21 @@ export function Hero({time}:{time:number}){
    s.fragmentShader=s.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
     float center=step(.18,filmUV.y)*step(filmUV.y,.82);
     vec2 imageUV=vec2(fract(filmUV.x),clamp((filmUV.y-.18)/.64,0.,1.));
-    float picture=dot(texture2D(photograph,imageUV).rgb,vec3(.2126,.7152,.0722));
+    vec3 pictureRGB=texture2D(photograph,imageUV).rgb;
+    float picture=dot(pictureRGB,vec3(.2126,.7152,.0722));
     float gate=step(.06,imageUV.x)*step(imageUV.x,.94);
     float grain=fract(sin(dot(floor(filmUV*vec2(96.,230.)),vec2(12.9898,78.233)))*43758.5453);
     float scratch=(1.-smoothstep(0.,.001,abs(filmUV.y-.233)))*.02;
-    diffuseColor.rgb=mix(vec3(.40,.32,.22),vec3(.06,.05,.04)+picture*vec3(.22,.19,.15)*gate,center);
+    diffuseColor.rgb=${photographic?'mix(vec3(.27,.21,.14),vec3(.025)+pictureRGB*.52*gate,center)':'mix(vec3(.40,.32,.22),vec3(.06,.05,.04)+picture*vec3(.22,.19,.15)*gate,center)'};
     diffuseColor.rgb*=.99+grain*.02;diffuseColor.rgb+=scratch;
     `);
    s.fragmentShader=s.fragmentShader.replace('#include <roughnessmap_fragment>',`#include <roughnessmap_fragment>
     roughnessFactor=mix(.19,.24,center)+grain*.035;`);
    s.fragmentShader=s.fragmentShader.replace('#include <metalnessmap_fragment>',`#include <metalnessmap_fragment>
-    metalnessFactor=mix(.74,.28,center);`);
+    metalnessFactor=${photographic?'mix(.38,.07,center)':'mix(.74,.28,center)'};`);
    m.userData.shader=s;
   };return m;
- },[tex]);
+ },[tex,photographic]);
  useLayoutEffect(()=>{if(material.userData.shader)material.userData.shader.uniforms.filmTime.value=time},[time,material]);
  useLayoutEffect(()=>()=>{geometry.dispose();material.dispose()},[geometry,material]);
  return <mesh geometry={geometry} material={material}/>;

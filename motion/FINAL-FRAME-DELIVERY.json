@@ -1,0 +1,156 @@
+{
+  "branch": "motion/into-the-frame-final",
+  "base": "7177e12a5bc9184e3816400e66c51a703fff8048",
+  "recommended": "Final-named files; seven-ribbon opening preserves the supplied preferred direction",
+  "heroPlate": "Visibly labeled original temporary AI-generated artwork; not verified CINEMA inference footage",
+  "preservedOutroBody": {
+    "frames": "0\u2013105",
+    "sourceCommit": "3d87ae7f0aebb9f5d682a0c502ef7a61bcc43779",
+    "sourceVideoSHA256": "1c9d2366f3fd54b0db694e919cc374a0830f8b2108e0c52cf59ea7d5fe0dd962"
+  },
+  "distribution": "Rendered binaries, portable browser preview, contact sheets, reports and editable source are delivered separately and in cinema-final-production.zip; source, attribution and media manifest are committed on the isolated branch.",
+  "artifacts": [
+    {
+      "name": "cinema-opening-final.mp4",
+      "bytes": 5432453,
+      "sha256": "5da0d733a0e97e593aeac776f97c21ee4843402ca135273dd6e7fc821fabb4a1"
+    },
+    {
+      "name": "cinema-outro-final.mp4",
+      "bytes": 2882110,
+      "sha256": "49662bb33e216108fdddcfa776132ddb7ca19a5f6cbceb12adbc64c2c2f8a06d"
+    },
+    {
+      "name": "cinema-combined-final.mp4",
+      "bytes": 8315902,
+      "sha256": "6c4943ceb2a505178f3bcc8a9f978132e87e1026b60e298bc09fe26ef718d93b"
+    },
+    {
+      "name": "cinema-browser-preview.html",
+      "bytes": 7238149,
+      "sha256": "71f149cc80acdebd42b401fd5efd0225e8a641d3e0e43236b996fa0ce37e1754"
+    },
+    {
+      "name": "before-after-opening.jpg",
+      "bytes": 258362,
+      "sha256": "3333d6f4e9651d1ad80949b75f7c0aad50363fc36aa46b7ea63dc4dce13cd87b"
+    },
+    {
+      "name": "before-after-outro.jpg",
+      "bytes": 244021,
+      "sha256": "8806ac9f4ce22ae11e13a1e18044f493e1e44d27ab591b56a3ed9b527652b463"
+    },
+    {
+      "name": "opening-final-contact.jpg",
+      "bytes": 249431,
+      "sha256": "5468d3d2abada793f86e3d0c967114c92f0bdd7f1bd635887f4def6deca3ad9a"
+    },
+    {
+      "name": "outro-final-contact.jpg",
+      "bytes": 288035,
+      "sha256": "ee86654fcd4321ef86bdc55227e8880b8da8eddab694de0a6c54775fff94e7a6"
+    }
+  ],
+  "mediaChecks": [
+    {
+      "name": "cinema-opening-final.mp4",
+      "width": 1920,
+      "height": 1080,
+      "fps": "24/1",
+      "frames": 120,
+      "duration": 5.0,
+      "audioCodec": "aac",
+      "channels": 2,
+      "sampleRate": "48000",
+      "firstFrameMax": 0,
+      "lastFrameMax": 0,
+      "peakDBFS": -11.475761413574219,
+      "audioRMS": 0.04143708199262619,
+      "maximumFrameStepErrorSeconds": 6.66666667349658e-07,
+      "fullDecode": "pass"
+    },
+    {
+      "name": "cinema-outro-final.mp4",
+      "width": 1920,
+      "height": 1080,
+      "fps": "24/1",
+      "frames": 240,
+      "duration": 10.0,
+      "audioCodec": "aac",
+      "channels": 2,
+      "sampleRate": "48000",
+      "firstFrameMax": 255,
+      "lastFrameMax": 0,
+      "peakDBFS": -11.606131553649902,
+      "audioRMS": 0.037588756531476974,
+      "maximumFrameStepErrorSeconds": 6.66666667349658e-07,
+      "fullDecode": "pass"
+    },
+    {
+      "name": "cinema-combined-final.mp4",
+      "width": 1920,
+      "height": 1080,
+      "fps": "24/1",
+      "frames": 372,
+      "duration": 15.5,
+      "audioCodec": "aac",
+      "channels": 2,
+      "sampleRate": "48000",
+      "firstFrameMax": 0,
+      "lastFrameMax": 0,
+      "peakDBFS": -11.475761413574219,
+      "audioRMS": 0.03829343616962433,
+      "maximumFrameStepErrorSeconds": 6.66666667349658e-07,
+      "fullDecode": "pass"
+    }
+  ],
+  "browserChecks": {
+    "errors": [],
+    "fontLoaded": true,
+    "repeatTests": [
+      {
+        "film": "OPENING",
+        "frame": 50,
+        "awayFrame": 18,
+        "repeatSeekByteIdentical": true,
+        "awayFrameVisiblyDifferent": true
+      },
+      {
+        "film": "OUTRO",
+        "frame": 80,
+        "awayFrame": 48,
+        "repeatSeekByteIdentical": true,
+        "awayFrameVisiblyDifferent": true
+      }
+    ]
+  },
+  "playbackChecks": {
+    "environment": "Headless Chromium software compositor; 960\u00d7540 playback surface; full 1080p files",
+    "results": [
+      {
+        "name": "cinema-opening-final.mp4",
+        "duration": 5.013333,
+        "width": 1920,
+        "height": 1080,
+        "totalFrames": 120,
+        "droppedFrames": 12
+      },
+      {
+        "name": "cinema-outro-final.mp4",
+        "duration": 10.005333,
+        "width": 1920,
+        "height": 1080,
+        "totalFrames": 240,
+        "droppedFrames": 1
+      },
+      {
+        "name": "cinema-combined-final.mp4",
+        "duration": 15.509333,
+        "width": 1920,
+        "height": 1080,
+        "totalFrames": 372,
+        "droppedFrames": 18
+      }
+    ]
+  }
+}

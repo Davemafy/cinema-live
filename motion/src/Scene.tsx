@@ -1,5 +1,5 @@
 import {mediaFile} from './media';
-import React,{useMemo,useLayoutEffect} from 'react';
+import React,{useMemo,useLayoutEffect,useRef} from 'react';
 import {useThree,useFrame,useLoader} from '@react-three/fiber';
 import {ThreeCanvas} from '@remotion/three';
 import {AbsoluteFill,useCurrentFrame,useVideoConfig,Img,staticFile,Audio} from 'remotion';
@@ -13,8 +13,10 @@ import {RectAreaLightUniformsLib} from 'three/examples/jsm/lights/RectAreaLightU
 import {ribbon,smooth} from './geometry';
 import {filmMaterial} from './material';
 import {ImageFragments,LogoFragments} from './Fragments';
-export function Rig({t,shot}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending'}){
+export type Director={position:THREE.Vector3,target:THREE.Vector3,fov:number,focus:number,environment?:number,aperture?:number,bloom?:number};
+export function Rig({t,shot,director}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending',director?:Director}){
  const {gl,scene,camera,size}=useThree();
+ const needsDraw=useRef(true);
  const composer=useMemo(()=>{RectAreaLightUniformsLib.init();gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.05;
  const env=new THREE.Scene();env.background=new THREE.Color('#040505');
  for(const [x,y,z,w,h,c,intensity] of [[-4,3,2,.55,8,'#ffb869',3.2],[4,1,-2,.3,8,'#9cd6ff',2.2],[0,5,0,8,.3,'#fff0dc',3],[0,-4,1,6,.12,'#feba70',1.8]] as any[]){const panel=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(c).multiplyScalar(intensity)}));panel.position.set(x,y,z);panel.lookAt(0,0,0);env.add(panel)}
@@ -23,7 +25,7 @@ export function Rig({t,shot}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending'}){
  const b=new BokehPass(scene,camera,{focus:9.3,aperture:.00032,maxblur:.018});c.addPass(b);
  c.addPass(new UnrealBloomPass(new THREE.Vector2(size.width,size.height),.26,.45,1.2));c.addPass(new OutputPass());return c;
  },[gl,scene,camera]);
- useLayoutEffect(()=>{composer.setSize(size.width,size.height)},[size,composer]);
+ useLayoutEffect(()=>{composer.setSize(size.width,size.height);needsDraw.current=true},[size,composer]);
  useLayoutEffect(()=>{
  scene.environmentIntensity=shot?1.25:.2+.8*smooth(.3,1.7,t);scene.environmentRotation.y=shot?.24:t*.12;
  const move=smooth(1.6,3.5,t),settle=smooth(3.1,4.3,t);
@@ -49,8 +51,19 @@ export function Rig({t,shot}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending'}){
   (composer.passes[1] as any).uniforms.maxblur.value=.009;
   (composer.passes[2] as UnrealBloomPass).strength=.12;
  }
- },[t,camera,composer,shot]);
- useFrame(()=>composer.render(),1);return null;
+ if(director){
+  camera.position.copy(director.position);camera.lookAt(director.target);
+  cam.fov=director.fov;cam.updateProjectionMatrix();
+  scene.environmentIntensity=director.environment??.9;scene.environmentRotation.y=.24;
+  (composer.passes[1] as any).uniforms.focus.value=director.focus;
+  (composer.passes[1] as any).uniforms.aperture.value=director.aperture??.00006;
+  (composer.passes[1] as any).uniforms.maxblur.value=.007;
+  (composer.passes[2] as UnrealBloomPass).strength=director.bloom??.075;
+ }
+  needsDraw.current=true;
+ },[t,camera,composer,shot,director]);
+ // Preview and export submit only when their frame/size/direction changes.
+ useFrame(()=>{if(needsDraw.current){composer.render();needsDraw.current=false;if(typeof window!=='undefined')(window as any).__CINEMA_RENDERED_TIME=t}},1);return null;
 }
 function Ribbons({t,closing}:{t:number,closing:boolean}){
  const tex=useLoader(THREE.TextureLoader,mediaFile('generated-frame.jpg'));tex.colorSpace=THREE.SRGBColorSpace;

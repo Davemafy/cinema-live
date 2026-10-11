@@ -5,9 +5,9 @@
   "scripts": {
     "preview": "vite --host 0.0.0.0",
     "render": "remotion render src/index.tsx",
-    "prepreview": "python3 sound.py",
+    "prepreview": "python3 sound.py && python3 final-sound.py",
     "build": "vite build --base ./",
-    "prebuild": "python3 sound.py",
+    "prebuild": "python3 sound.py && python3 final-sound.py",
     "typecheck": "tsc"
   },
   "dependencies": {
