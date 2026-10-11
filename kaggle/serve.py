@@ -233,10 +233,12 @@ def smoke_test():
         response.raise_for_status()
         jid = response.json()["id"]
         say("SELFTEST: job " + jid + " accepted; waiting for Kaggle GPU")
-        for _ in range(360):
+        for check_index in range(360):
             time.sleep(5)
             with LOCK:
                 job = dict(JOBS[jid])
+            if check_index % 6 == 0:
+                say("SELFTEST PROGRESS: " + job["state"] + " (" + str((check_index + 1) * 5) + "s)")
             if job["state"] == "succeeded":
                 probe = subprocess.run(
                     ["ffprobe", "-v", "error", "-show_entries", "format=duration:stream=width,height,r_frame_rate,nb_frames",
