@@ -13,7 +13,7 @@ import {RectAreaLightUniformsLib} from 'three/examples/jsm/lights/RectAreaLightU
 import {ribbon,smooth} from './geometry';
 import {filmMaterial} from './material';
 import {ImageFragments,LogoFragments} from './Fragments';
-function Rig({t}:{t:number}){
+export function Rig({t,shot}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending'}){
  const {gl,scene,camera,size}=useThree();
  const composer=useMemo(()=>{RectAreaLightUniformsLib.init();gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.05;
  const env=new THREE.Scene();env.background=new THREE.Color('#040505');
@@ -25,13 +25,31 @@ function Rig({t}:{t:number}){
  },[gl,scene,camera]);
  useLayoutEffect(()=>{composer.setSize(size.width,size.height)},[size,composer]);
  useLayoutEffect(()=>{
- scene.environmentIntensity=.2+.8*smooth(.3,1.7,t);scene.environmentRotation.y=t*.12;
+ scene.environmentIntensity=shot?1.25:.2+.8*smooth(.3,1.7,t);scene.environmentRotation.y=shot?.24:t*.12;
  const move=smooth(1.6,3.5,t),settle=smooth(3.1,4.3,t);
  camera.position.set(1.2*Math.sin(t*.6)*(1-settle),.18*Math.sin(t*.9)*(1-settle),7.6-1.8*move+4.5*settle);
  camera.lookAt(.22*Math.sin(t*.6)*(1-settle),0,-.4);
  const cam=camera as THREE.PerspectiveCamera;cam.fov=43-5*settle;cam.updateProjectionMatrix();
  (composer.passes[1] as any).uniforms.focus.value=camera.position.z+.3;
- },[t,camera,composer]);
+ if(shot){
+  const cam=camera as THREE.PerspectiveCamera;
+  const q=shot==='A'?smooth(0,2,t):shot==='C'?smooth(0,1.3,t):smooth(shot==='opening'?1:0,shot==='opening'?3.4:2,t);
+  if(shot==='A'){
+   camera.position.set(-.3+q*.9,.25+q*.3,5.2-q*.5);camera.lookAt(.1,.3,.3);cam.fov=42;
+  }else if(shot==='C'){
+   camera.position.set(.3,.25,7);camera.lookAt(0,.3,0);cam.fov=40;
+  }else{
+   // An authored pull through the front loop, then a wide settling composition.
+   camera.position.set(-1.05+q*1.55,.48+q*.62,3.15+q*5.1);
+   camera.lookAt(-.8+q*.9,.45+q*.05,1.15*(1-q));cam.fov=46-8*q;
+  }
+  cam.updateProjectionMatrix();
+  (composer.passes[1] as any).uniforms.focus.value=shot==='A'?4.1:shot==='C'?6.4:1.9+q*6.1;
+  (composer.passes[1] as any).uniforms.aperture.value=.00009;
+  (composer.passes[1] as any).uniforms.maxblur.value=.009;
+  (composer.passes[2] as UnrealBloomPass).strength=.12;
+ }
+ },[t,camera,composer,shot]);
  useFrame(()=>composer.render(),1);return null;
 }
 function Ribbons({t,closing}:{t:number,closing:boolean}){

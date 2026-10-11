@@ -1,7 +1,7 @@
 import numpy as np,wave
 sr=48000
 rng=np.random.default_rng(17)
-for name,dur,hit in [('opening',5,3.72),('ending',4,2.65)]:
+for name,dur,hit in [('opening',5,3.98),('ending',4,2.2)]:
  t=np.arange(int(sr*dur))/sr
  rise=np.clip(t/(hit+.05),0,1)**2*np.exp(-np.maximum(t-hit,0)*7)
  noise=rng.normal(0,1,len(t));sm=np.convolve(noise,np.ones(90)/90,'same')

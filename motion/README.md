@@ -1,50 +1,85 @@
-# CINEMA motion idents
+# CINEMA motion reconstruction
 
-Isolated production workspace. Existing application files are untouched.
+Isolated workspace on `motion/film-ribbon-ident`. The application is untouched.
+The existing Three/R3F/Remotion rendering pipeline remains in use. The ending
+is a clearly labeled, unapproved footage placeholder.
 
 ## Preview
 
-```
+```bash
 cd motion
 npm ci
 python3 -m pip install -r requirements.txt
 npm run preview -- --host 127.0.0.1
 ```
 
-`out/browser-preview.html` is a self-contained version with the renderer and media embedded. Open it in a browser with WebGL enabled. The Remotion Player provides play, pause, audio, full screen and frame scrubbing.
+The Player offers A (physical ribbon), B (macro-to-wide), C (lens crossing),
+Opening and Ending. Each frame evaluates the same source used for export.
+For a self-contained offline preview:
+
+```bash
+npm run build
+mkdir -p out/reconstruction
+python3 bundle-preview.py
+```
+
+Open `out/reconstruction/browser-preview-v2.html` with WebGL enabled. Embedded
+media avoids file:// texture restrictions. `sound.py` regenerates the audio.
 
 ## Export
 
-```
+```bash
 python3 sound.py
 npx remotion browser ensure
-npx remotion render src/index.tsx Proof out/ribbon-proof.mp4 --gl=swangle --concurrency=2
-npx remotion render src/index.tsx Opening out/opening.mp4 --gl=swangle --concurrency=3 --crf=17
-npx remotion render src/index.tsx Ending out/ending.mp4 --gl=swangle --concurrency=3 --crf=17
-npx remotion render src/index.tsx Combined out/combined-preview.mp4 --gl=swangle --concurrency=3 --crf=17
+mkdir -p out/reconstruction
+npx remotion render src/index.tsx ExperimentA out/reconstruction/experiment-A.mp4 --gl=swangle --concurrency=2 --crf=17
+npx remotion render src/index.tsx ExperimentB out/reconstruction/experiment-B.mp4 --gl=swangle --concurrency=2 --crf=17
+npx remotion render src/index.tsx ExperimentC out/reconstruction/experiment-C.mp4 --gl=swangle --concurrency=2 --crf=17
+npx remotion render src/index.tsx Opening out/reconstruction/opening-v2.mp4 --gl=swangle --concurrency=2 --crf=17
+# Inspect opening before exporting ending.
+npx remotion render src/index.tsx Ending out/reconstruction/ending-placeholder-v2.mp4 --gl=swangle --concurrency=2 --crf=17
+bash finalize-reconstruction.sh
+python3 contact-sheets.py
+npm run typecheck
+node verify-reconstruction.cjs
+node verify-reconstruction-videos.cjs
 ```
 
-All compositions use 1920 × 1080 at 24 fps. Opening: 120 frames. Ending: 96 frames. Combined: 228 frames including a 12-frame black spacer. Restricted environments which cannot enumerate interfaces can prepend `NODE_OPTIONS=--require=./runtime-shim.cjs`.
+All videos: 1920×1080, 24 fps. Experiments: 48 frames each; opening: 120;
+ending: 96; combined: 228 including a 12-frame black spacer. Finalization pins
+container/audio duration to 5/4/9.5 seconds. Restricted environments can prepend
+`NODE_OPTIONS=--require=./runtime-shim.cjs` to Remotion/Vite commands.
+QA uses runtime Playwright via `CODEX_PRIMARY_RUNTIME_NODE_MODULES`; adapt to
+local Playwright outside this environment. FFmpeg and Pillow make contact sheets.
 
-`npm exec tsc` checks source. `npm exec vite build -- --base ./` builds the browser player; `python3 bundle-preview.py` embeds that build and its media into the standalone preview.
+## Implementation
 
-## Scene responsibilities
+- `src/reconstruction/Hero.tsx`: solid film, real perforation walls, arc-length
+  curvature, photographic emulsion, physical material and custom GLSL.
+- `src/Scene.tsx:Rig`: preserved environment/postprocessing, authored camera and
+  focus. Legacy scene remains in this file for comparison.
+- `src/reconstruction/LensRibbon.tsx`: physical camera-space occluder aligned
+  with the precise compositor's reveal parameter.
+- `src/reconstruction/Edit.tsx`: editorial timing, logo mask and distinct image
+  shutter ending with a clear placeholder label.
+- `public/cinema-original-wordmark.png`: original repository DOM logo frozen
+  by `capture-logo.cjs`; no generated lettering.
+- `sound.py`: deterministic stereo whoosh, identity and blackout cues.
 
-- `geometry.ts`: analytic twisting strip surface, UVs, normals, convergence.
-- `material.ts`: physical metal/clearcoat material; custom perforation, emulsion, flex and roughness GLSL.
-- `Scene.tsx`: frame clock, camera, reflection cards, lights, bloom, depth of field, fog and custom dust shader; exact logo compositor.
-- `Fragments.tsx`: image-bearing strip transformation and logo silhouette fragments.
-- `sound.py`: reproducible original stereo sound cues.
-- `index.tsx`: Remotion compositions and deterministic sequence order.
+Animation uses current frame/fps. No accumulated delta or uncontrolled clocks.
+`useFrame` only submits the existing composer. Geometry/materials are memoized.
 
-There is no exported wall-clock simulation: geometry, uniforms, camera, lighting, fragments and compositing derive from the current frame. R3F's render callback invokes the compositor; it does not advance animation state. The browser uses the same composition with Remotion Player's clock instead of a second GSAP timeline.
+Read [REFERENCE-HARVEST-V2.md](REFERENCE-HARVEST-V2.md) for inspected functions,
+executed evidence, licenses and performance limits. [QUALITY-REPORT-V2.md](QUALITY-REPORT-V2.md)
+records visual review. Earlier attribution and quality files describe the first edit.
 
-## Logo and footage
+`capture-references.cjs` expects adjacent `../../references/` checkouts named
+`path-flow`, `three-source`, `postprocessing` and `windline`. Install Windline's
+dependencies, plus compatible Three .178 / postprocessing 6.38 into
+`references/post-harness`. Native examples and a targeted postprocessing harness
+run in isolated local servers. Unlicensed model assets and WebGPU dependencies
+never enter CINEMA production.
 
-The authoritative repository logo is CSS text: Arial/Helvetica/sans-serif, weight 800, tracking -0.05em, ivory #f0efea plus orange #efaa68 square, with an 8:30 gap/size ratio. The final compositor scales these values together without changing the letterforms. This differs from the thin custom lettering in the supplied storyboard. There was no original vector wordmark file in either main or kaggle-worker-demo. The final logo uses precise browser compositing, not generated lettering.
-
-`generated-frame.jpg` is extracted at 1 second from the supplied CINEMA-session file `1000386215.mp4` (1280 × 720). That clip's generation provenance was not available in repository metadata. It is not the repo's explicitly labelled sample-input dance clip. Replace this asset with a confirmed generated frame if the submitted film needs independently documented provenance.
-
-See `ATTRIBUTION.md` and `QUALITY-REPORT.md` for source/license history and the visual assessment.
-
-For exactly bounded encoded audio and a 12-frame combined spacer, run `bash finalize-edit.sh` after rendering the individual MP4s. The delivered combined file was assembled from those inspected individual renders. Synthesized WAVs are generated from source and excluded from Git; they are included in the downloadable source kit.
+Replace `public/generated-frame.jpg` with a verified CINEMA result before
+removing the ending label or approving the ending. The original repository logo
+is heavier than the storyboard lettering; exact repository identity is preserved.
