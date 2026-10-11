@@ -14,17 +14,17 @@ import {ribbon,smooth} from './geometry';
 import {filmMaterial} from './material';
 import {ImageFragments,LogoFragments} from './Fragments';
 export type Director={position:THREE.Vector3,target:THREE.Vector3,fov:number,focus:number,environment?:number,aperture?:number,bloom?:number};
-export function Rig({t,shot,director}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending',director?:Director}){
+export function Rig({t,shot,director,neutral=false}:{neutral?:boolean,t:number,shot?:'A'|'B'|'C'|'opening'|'ending',director?:Director}){
  const {gl,scene,camera,size}=useThree();
  const needsDraw=useRef(true);
  const composer=useMemo(()=>{RectAreaLightUniformsLib.init();gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.05;
  const env=new THREE.Scene();env.background=new THREE.Color('#040505');
- for(const [x,y,z,w,h,c,intensity] of [[-4,3,2,.55,8,'#ffb869',3.2],[4,1,-2,.3,8,'#9cd6ff',2.2],[0,5,0,8,.3,'#fff0dc',3],[0,-4,1,6,.12,'#feba70',1.8]] as any[]){const panel=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(c).multiplyScalar(intensity)}));panel.position.set(x,y,z);panel.lookAt(0,0,0);env.add(panel)}
+ for(const [x,y,z,w,h,c,intensity] of [[-4,3,2,.55,8,'#ffb869',3.2],[4,1,-2,.3,8,'#9cd6ff',2.2],[0,5,0,8,.3,'#fff0dc',3],[0,-4,1,6,.12,'#feba70',1.8]] as any[]){const panel=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(neutral?(c==='#ffb869'?'#ffe1bc':c==='#feba70'?'#ffdfb9':c):c).multiplyScalar(intensity)}));panel.position.set(x,y,z);panel.lookAt(0,0,0);env.add(panel)}
  const pmrem=new THREE.PMREMGenerator(gl);scene.environment=pmrem.fromScene(env,.03).texture;pmrem.dispose();
  const c=new EffectComposer(gl);c.addPass(new RenderPass(scene,camera));
  const b=new BokehPass(scene,camera,{focus:9.3,aperture:.00032,maxblur:.018});c.addPass(b);
  c.addPass(new UnrealBloomPass(new THREE.Vector2(size.width,size.height),.26,.45,1.2));c.addPass(new OutputPass());return c;
- },[gl,scene,camera]);
+ },[gl,scene,camera,neutral]);
  useLayoutEffect(()=>{composer.setSize(size.width,size.height);needsDraw.current=true},[size,composer]);
  useLayoutEffect(()=>{
  scene.environmentIntensity=shot?1.25:.2+.8*smooth(.3,1.7,t);scene.environmentRotation.y=shot?.24:t*.12;
