@@ -15,6 +15,20 @@ it has not run here and has not been adopted. No fabricated output or benchmark.
 
 Repository: https://github.com/Davemafy/cinema-live
 
+## Watch the actual proof before running the demo
+
+This experiment branch includes an honest, viewer-accessible **offline before/after** preview in `src/components/VerifiedExperiment.tsx`. It is separate from the site's temporary live GPU inference.
+
+- [Watch the actual 5-second AI-directed preservation result](docs/evidence/preservation-v1/treated-source.mp4)
+- [Watch the 56-second evidence demo](docs/evidence/preservation-v1/cinema-evidence-demo.mp4)
+- [Original/result comparison](docs/evidence/preservation-v1/comparison.jpg)
+- [Technical provenance, 120-frame output, source and image credits](docs/preservation-aware-experiment.md)
+
+The experiment uses a real image-AI appearance reference and follows motion using optical-flow-guided appearance transfer. It does **not** generate new faces or body motion; it preserves original source pixels. The original production route remains an experimental LTX video-to-video integration, dependent on a live provider. A fresh public user upload is not yet proven to produce this offline treatment.
+
+**Banana Hacks finalization:** publish a public YouTube demo <= 3 minutes, finish Devpost, and check all team/eligibility details. `submission/DEVPOST.md`, `submission/DEMO-SCRIPT.md`, and `submission/JUDGES.md` hold evidence-grounded drafts. No authenticated submission has been made.
+
+
 ## Run locally
 
 Node.js 24 recommended (22 supported). Install locked dependencies:
