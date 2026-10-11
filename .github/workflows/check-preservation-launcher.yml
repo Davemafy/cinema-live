@@ -1,0 +1,21 @@
+name: Preservation launcher checks
+on:
+  push:
+    branches:
+      - experiment/preservation-aware-treatment
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile preservation experiment
+        run: python -m py_compile kaggle/experiments/run_preservation_cell.py kaggle/experiments/treatment_transfer.py
+      - name: Verify pinned assets and Wan-optional fallback
+        run: python -m unittest discover -s tests -p test_preservation_launcher.py -v
