@@ -1,0 +1,19 @@
+{
+  "errors": [],
+  "shots": [
+    {
+      "name": "reference-primitives",
+      "samples": 5,
+      "compiling": false,
+      "three": "0.178.0",
+      "pathtracer": "0.0.23"
+    },
+    {
+      "name": "dielectric-clearcoat",
+      "samples": 5,
+      "compiling": false,
+      "three": "0.178.0",
+      "pathtracer": "0.0.23"
+    }
+  ]
+}
