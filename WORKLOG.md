@@ -117,3 +117,33 @@ pinned single cell and supply actual output/logs. A T4 is a plausible candidate
 under the documented memory gates, not a verified fit. Do not adopt, integrate,
 deploy or increase readiness/quality scores before inspecting actual generated
 footage. Next action: review that evidence and compare with the preserved LTX MP4.
+
+## Preservation-aware sprint — 2026-10-11
+
+Created `experiment/preservation-aware-treatment` from updated Wan branch
+92b6db7, retaining its Python 3.13 ensurepip workaround, /tmp cache layout and
+explicit GPU prompt-embedding placement. Owner reports verified Wan T4 baseline:
+224 seconds, 5.19 GiB peak allocation, weak transformation. Actual baseline video
+has not been received here; these are owner-supplied results, not local measurements.
+
+Generated a real image-AI appearance reference from the licensed source's first
+frame using the session image-generation tool. Strong amber-left/cool-right
+lighting; generated poses/faces drift, so generated pixels never enter Path A.
+Implemented linear-light gain extraction, confidence-checked optical-flow field
+propagation, original-frame compositing and native-resolution MP4 with audio
+preservation. Two real renders produced the same hash. Second CPU processing:
+20.808 seconds excluding image generation, 120 frames, 854x480 at 24000/1001 fps.
+Sample is silent. Inspected start/middle/end plus all 120 frames via contact sheet;
+retained subject/action/detail and visible directed appearance, no obvious flicker.
+This is AI-derived appearance transfer, not physical relighting or scene synthesis.
+
+Nine Python CPU tests pass; real AAC fixture export preserves identical AAC
+packets, source dimensions/frame count/timing, no-op pixel values and provenance
+checks. Added Wan supplied-restyled-reference and cache-only modes without
+changing its controlled seed/sampling/source settings. Existing venvs are now
+preserved instead of cleared. No new GPU result has run. No production changes.
+
+Evidence is committed under docs/evidence/preservation-v1. Next action: use the
+single pinned Kaggle cell to reproduce Path A and test Path B with cached Wan,
+then inspect the real candidate against the preserved baseline. Live image-AI
+serving and complete deployed journey remain unverified; no readiness-score bump.

@@ -298,7 +298,20 @@ def render(args, out):
     torch.cuda.set_device(hw["selectedDevice"])
     torch.set_num_threads(min(4, os.cpu_count() or 1))
     cache = out.parent / "cinema-vace-cache"
-    missing = inventory(cache)
+    if args.cache_only:
+        snapshot = cache / "models--Wan-AI--Wan2.1-VACE-1.3B-diffusers" / "snapshots" / REVISION
+        required_weights = ["text_encoder/model-00001-of-00003.safetensors",
+                            "text_encoder/model-00002-of-00003.safetensors",
+                            "text_encoder/model-00003-of-00003.safetensors",
+                            "transformer/diffusion_pytorch_model-00001-of-00002.safetensors",
+                            "transformer/diffusion_pytorch_model-00002-of-00002.safetensors",
+                            "vae/diffusion_pytorch_model.safetensors"]
+        if any(not (snapshot/name).is_file() for name in required_weights):
+            raise RuntimeError("Pinned Wan cache incomplete. Cache-only mode stops without downloads.")
+        missing = 0
+        say("REUSE PINNED WAN CACHE: no weight downloads allowed")
+    else:
+        missing = inventory(cache)
     free, total = torch.cuda.mem_get_info()
     resource_gate(available_ram(), shutil.disk_usage(out).free, total, free, missing)
     source = Path(args.source).resolve() if args.source else fetch_sample(out)
@@ -306,6 +319,18 @@ def render(args, out):
         raise RuntimeError("Source video does not exist")
     frames = read_source(source)
     gray, mask, refs = conditions(frames)
+    if args.appearance_reference:
+        from PIL import Image, ImageOps
+        reference_path = Path(args.appearance_reference).resolve()
+        reference_image = Image.open(reference_path).convert("RGB")
+        source_aspect = frames[0].width / frames[0].height
+        if abs(reference_image.width / reference_image.height - source_aspect) > .08:
+            raise RuntimeError("Restyled reference aspect does not match the source; do not distort or crop it")
+        fitted = ImageOps.contain(reference_image, (WIDTH, HEIGHT), Image.Resampling.LANCZOS)
+        canvas = Image.new("RGB", (WIDTH, HEIGHT), "black")
+        canvas.paste(fitted, ((WIDTH-fitted.width)//2, (HEIGHT-fitted.height)//2))
+        refs = [canvas]
+        say("APPEARANCE: supplied AI-restyled image; original full-video motion conditioning retained")
     encode_mp4(frames, out / "source-normalized.mp4")
     encode_mp4(gray, out / "conditioning-gray.mp4")
     refs[0].save(out / "appearance-reference.png")
@@ -318,9 +343,13 @@ def render(args, out):
               "textEncoderDtype": "bfloat16 on CPU, unloaded before diffusion", "vaeDtype": "float32",
               "stylePostprocessing": False, "versions": versions, "hardware": hw,
               "ltxBaselineSupplied": bool(args.ltx_result), "gpuVerified": False, "visualDecision": "pending"}
+    if args.appearance_reference:
+        config["appearanceReferenceSha256"] = hashlib.sha256(Path(args.appearance_reference).read_bytes()).hexdigest()
+        config["conditioning"] = "full-video-gray + white-regeneration-mask + supplied-restyled-appearance-reference"
+    config["cacheOnly"] = args.cache_only
     (out / "run.json").write_text(json.dumps(config, indent=2))
     started = time.monotonic()
-    kwargs = {"revision": REVISION, "cache_dir": str(cache), "local_files_only": False}
+    kwargs = {"revision": REVISION, "cache_dir": str(cache), "local_files_only": args.cache_only}
     # Staged loading: UMT5 never occupies T4 VRAM or shares RAM with the DiT.
     with heartbeat("LOAD/ENCODE UMT5 ON CPU", torch), torch.inference_mode():
         encoder = UMT5EncoderModel.from_pretrained(MODEL, subfolder="text_encoder", torch_dtype=torch.bfloat16,
@@ -411,7 +440,9 @@ def bootstrap(args, out):
     env_dir = out.parent / "cinema-vace-venv"
     # Kaggle's Python 3.13 runtime can fail when venv runs ensurepip.
     # Skip ensurepip and install via the already-working outer pip instead.
-    command([sys.executable, "-m", "venv", "--clear", "--without-pip",
+    if (env_dir / "bin/python").exists():
+        raise RuntimeError("Existing Wan environment preserved. Use its interpreter directly; do not rebuild it.")
+    command([sys.executable, "-m", "venv", "--without-pip",
              "--system-site-packages", env_dir], timeout=120)
     interpreter = env_dir / "bin/python"
     say("VENV CREATED WITHOUT ENSUREPIP")
@@ -429,9 +460,12 @@ def bootstrap(args, out):
     env["TOKENIZERS_PARALLELISM"] = "false"
     env["HF_HUB_DOWNLOAD_TIMEOUT"] = "120"
     forwarded = [str(interpreter), "-u", str(Path(__file__).resolve()), "--out", str(out)]
-    for flag, value in [("--source", args.source), ("--ltx-result", args.ltx_result), ("--prompt", args.prompt)]:
+    for flag, value in [("--source", args.source), ("--ltx-result", args.ltx_result), ("--prompt", args.prompt),
+                        ("--appearance-reference", args.appearance_reference)]:
         if value:
             forwarded.extend([flag, value])
+    if args.cache_only:
+        forwarded.append("--cache-only")
     subprocess.run([str(interpreter), "-u", str(Path(__file__).resolve()), "--api-check"], env=env, check=True, timeout=120)
     say("EXECUTE ONCE, 45-minute whole-experiment timeout (includes downloads)")
     subprocess.run(forwarded, env=env, check=True, timeout=2700)
@@ -444,6 +478,8 @@ def main():
     parser.add_argument("--source", help="Local >=4.1-second video. Default: same licensed sample as LTX selftest")
     parser.add_argument("--ltx-result", help="Optional downloaded LTX baseline MP4; never a source substitute")
     parser.add_argument("--prompt", help="Descriptive shot prompt matching a custom source")
+    parser.add_argument("--appearance-reference", help="Actual inspected AI-restyled source image; no unrelated reference")
+    parser.add_argument("--cache-only", action="store_true", help="Never download model weights; reuse existing pinned cache")
     parser.add_argument("--out", default="/kaggle/working/cinema-vace-experiment")
     args = parser.parse_args()
     # Compile own source before imports of diffusion code or any weight loading.
