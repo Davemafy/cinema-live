@@ -30,7 +30,14 @@
     "mediaLicense": "Derivative of ARTSEDGE Kennedy Center Charleston-dance, CC BY 3.0; see public/demo-attribution.txt"
   },
   "opencv": "4.11.0",
-  "visualReviewOfVideo": "pending",
+  "visualReviewOfVideo": "Inspected start/middle/end and every-frame contact sheet. Full Chromium playback reached ended for original and result, 5.005 seconds each, no decode/page errors. Appearance transfer is visible; no obvious flicker in the inspected sequence. LTX/Wan baseline MP4s unavailable for direct ranking.",
   "knownLimits": "2D appearance transfer; occlusions/drift; no new geometry or atmosphere synthesis",
-  "processingTimeExcludesImageGeneration": true
+  "processingTimeExcludesImageGeneration": true,
+  "browserPlayback": {
+    "originalEnded": true,
+    "resultEnded": true,
+    "duration": 5.005,
+    "videoErrors": [],
+    "pageErrors": []
+  }
 }

@@ -204,10 +204,11 @@ def encode_mp4(frames, target):
         raise RuntimeError("MP4 encode failed: " + result.stderr.decode(errors="replace")[-3000:])
 
 
-def comparison(frames, generated, out, ltx_path=None):
+def comparison(frames, generated, out, ltx_path=None, extra_videos=None):
     import numpy as np
     from PIL import Image, ImageDraw
     baseline = read_source(ltx_path) if ltx_path else None
+    extra_frames = [(label, read_source(path)) for label, path in (extra_videos or [])]
     indices = (0, FRAMES // 2, FRAMES - 1)
     sheets = []
     for i in indices:
@@ -218,6 +219,8 @@ def comparison(frames, generated, out, ltx_path=None):
         labels = ["SOURCE (normalized input)", "VACE (AI output; no grade)"]
         if baseline:
             images.append(baseline[i]); labels.append("LTX baseline (includes FFmpeg grade)")
+        for label, video in extra_frames:
+            images.append(video[i]); labels.append(label)
         sheet = Image.new("RGB", (WIDTH * len(images), HEIGHT + 42), "#141414")
         draw = ImageDraw.Draw(sheet)
         for col, (im, label) in enumerate(zip(images, labels)):
@@ -424,7 +427,12 @@ def render(args, out):
     if int(stream["nb_read_frames"]) != FRAMES or stream["width"] != WIDTH or stream["height"] != HEIGHT:
         raise RuntimeError("Encoded MP4 failed frame/dimension validation")
     command(["ffmpeg", "-v", "error", "-i", target, "-f", "null", "-"])
-    comparison(frames, result, out, args.ltx_result)
+    extra_videos = []
+    if args.source_preserving_result:
+        extra_videos.append(("AI-derived finish on source frames", args.source_preserving_result))
+    if args.wan_baseline:
+        extra_videos.append(("Wan original-reference baseline", args.wan_baseline))
+    comparison(frames, result, out, args.ltx_result, extra_videos)
     config.update({"gpuVerified": True, "outputProbe": probe,
                    "totalSeconds": round(time.monotonic() - started, 2),
                    "outputSha256": hashlib.sha256(target.read_bytes()).hexdigest()})
@@ -480,6 +488,8 @@ def main():
     parser.add_argument("--prompt", help="Descriptive shot prompt matching a custom source")
     parser.add_argument("--appearance-reference", help="Actual inspected AI-restyled source image; no unrelated reference")
     parser.add_argument("--cache-only", action="store_true", help="Never download model weights; reuse existing pinned cache")
+    parser.add_argument("--wan-baseline", help="Actual original-reference Wan output for time-aligned comparison")
+    parser.add_argument("--source-preserving-result", help="Actual AI-derived source-preserving MP4 for comparison")
     parser.add_argument("--out", default="/kaggle/working/cinema-vace-experiment")
     args = parser.parse_args()
     # Compile own source before imports of diffusion code or any weight loading.
