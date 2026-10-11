@@ -1,0 +1,42 @@
+name: CINEMA judge-demo build
+on:
+  push:
+    branches:
+      - experiment/preservation-aware-treatment
+  workflow_dispatch:
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: API/security tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Verify truthful public evidence references
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          component=Path('src/components/VerifiedExperiment.tsx').read_text()
+          assert 'fcb3c350baee688901d53b655a492a2e7eb57633' in component
+          assert 'previously rendered' in component
+          assert 'not evidence of a fully' in component
+          for name in ('treated-source.mp4','cinema-evidence-demo.mp4','CREDITS.md'):
+              assert name in component
+              assert (Path('docs/evidence/preservation-v1')/name).is_file()
+          from pathlib import Path
+          studio=Path('src/components/Studio.tsx').read_text()
+          assert '<VerifiedExperiment />' in studio
+          assert 'INFERENCE_ENABLED' not in component
+          print('Evidence disclosure and video assets verified')
+          PY
