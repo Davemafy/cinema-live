@@ -40,7 +40,7 @@ A full 16:9 image cannot map to a narrow film strip without distortion: first te
 | 36–87 | Image-bearing sheet deforms into physical ribbon |
 | 88–107 | Ribbon crosses lens, total occlusion |
 | 108–139 | Original exact CINEMA logo hold |
-| 140–184 | CREATED & DIRECTED BY / DAVID IMAFIDON |
+| 140–184 | CREATED & DIRECTED BY / DAVEMAFY IMAFIDON |
 | 185–225 | BUILT WITH (verified actual stack) / BUILT FOR BANANA HACKS 2026 |
 | 226–239 | Fade to black |
 
