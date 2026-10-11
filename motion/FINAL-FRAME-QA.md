@@ -1,5 +1,7 @@
 # CINEMA — Into the Frame: final visual QA
 
+Superseded for demo use by DEMO-CUT.md. The user judged the previous material too CG and the fold too stiff. The checks below record export integrity and the earlier review, not final visual approval.
+
 ## Recommended edit
 
 This is the evolution of the supplied preferred `opening(1).mp4`, not a replacement with the later single-coil experiment. The seven analytic ribbon forms and original staging orientation are preserved. All final-named films are the recommended delivery; proofs are review evidence.

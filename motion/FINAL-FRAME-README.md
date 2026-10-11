@@ -1,5 +1,7 @@
 # CINEMA — The Final Frame
 
+Current demo recommendation: see DEMO-CUT.md. The prior 3D exports are retained for further work; they were not visually approved.
+
 Isolated motion production; the application is unchanged. This branch derives from the existing film-ribbon production branch. Original compositions remain available alongside `FinalOpening`, `FinalOutro` and `FinalCombined`.
 
 ## Preview and export

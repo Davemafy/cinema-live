@@ -36,3 +36,7 @@ The recovered `cinema-cffccdaaf311f703d865c1d7.mp4` was 384×256, silent, 12 fps
 The supplied `opening(1).mp4` is the comparison baseline. Its seven analytic film shapes originate in this repository's `src/geometry.ts:ribbon`, not a downloaded studio asset. `Sculpture.tsx:solidPreferredRibbon` samples these same pre-collapse forms, constructs front/back surfaces and perforation walls, and welds consistent normals with the Three.js MIT utility `BufferGeometryUtils.mergeVertices`. The group retains the original staging orientation.
 
 Film4's camera journey, Radical's layered ribbon choreography, The Crown's glancing material light, Netflix's decisive payoff and Sarofsky's title hierarchy inform original shot direction only. Their footage, music, logos and proprietary code are not included or reproduced. V4 records their research context. The lens gate and its modest transmitted-edge light shader are original production code.
+
+## Deadline demo contingency
+
+The optional editorial outro uses original frame-driven optical-matte code instead of the simulated fold. Its temporary plate retains the provenance above. The supplied preferred opening is retained unchanged. The recommended three-second closer contains only the authentic logo and licensed director typography; it contains no temporary scenery. Existing original synthesized audio is trimmed and faded to that edit.
