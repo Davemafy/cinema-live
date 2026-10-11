@@ -144,7 +144,7 @@ def main():
         raise RuntimeError("Incorrect source-preserving report provenance")
     print("SOURCE-PRESERVING VIDEO COMPLETE. This is AI-derived appearance transfer, NOT video diffusion.",flush=True)
     video=saved/"restyled-wan/vace-output.mp4" if wan_available else finish_video
-    comparison=saved/"restyled-wan/comparison-contact-sheet.jpg" if wan_available else saved/"source-preserving/comparison.jpg"
+    comparison=saved/"restyled-wan/comparison-contact-sheet.jpg" if wan_available else saved/"source-preserving/comparison-contact-sheet.jpg"
     if wan_available:
         wan_report=json.loads((saved/"restyled-wan/run.json").read_text())
         if not video.is_file() or not wan_report.get("gpuVerified"):
