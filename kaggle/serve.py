@@ -132,6 +132,16 @@ def load():
         obj = LTXConditionPipeline.from_pretrained(
             "Lightricks/LTX-Video", torch_dtype=torch.float16
         )
+        # Lightricks' scheduler config enables dynamic shift, but the
+        # Diffusers 0.40 LTXConditionPipeline does not supply the required mu.
+        # Build a static-shift scheduler and validate it before GPU inference.
+        from diffusers import FlowMatchEulerDiscreteScheduler
+        obj.scheduler = FlowMatchEulerDiscreteScheduler.from_config(
+            obj.scheduler.config, use_dynamic_shifting=False
+        )
+        assert obj.scheduler.config.use_dynamic_shifting is False
+        obj.scheduler.set_timesteps(num_inference_steps=STEPS, device="cpu")
+        say("SCHEDULER PREFLIGHT OK: no mu needed")
         obj.enable_model_cpu_offload()
         obj.vae.enable_tiling()
         PIPE = obj
@@ -172,6 +182,7 @@ def generate():
             say(f"GENERATING {jid}: {FRAMES} frames / {STEPS} steps / conditioning strength {STRENGTH}")
             output = pipe(
                 video=source_frames,
+                strength=0.65,
                 prompt=job["prompt"],
                 negative_prompt="color, colored footage, oversaturated, blurry, jitter, anatomy distortions, visual glitches, captions, text",
                 height=HEIGHT, width=WIDTH, num_frames=FRAMES,
