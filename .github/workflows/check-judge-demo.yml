@@ -17,6 +17,8 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Install FFmpeg for actual media integration tests
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
       - name: Typecheck
         run: npm run typecheck
       - name: API/security tests
