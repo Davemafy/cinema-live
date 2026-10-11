@@ -169,3 +169,25 @@ retains its execution log and enforces a 30-minute hard timeout. A failed job
 returns a truthful failure instead of permanently holding a loading state. The
 successful fresh-upload measurements above describe the first worker version;
 the hardened worker is checked separately for empty-subject failure and retry.
+
+
+The hardened worker subsequently completed a **new real browser submission**:
+48 frames, 2.002 s, 854×480 at 24000/1001 fps. Actual CPU total **344.672 s**,
+reference inference **268.765 s**, load + inference **297.782 s**, peak process RAM
+**3.774 GiB**. It generated its own reference in a fresh directory; only weights
+were reused. Reference and film hashes exactly reproduce the previous same-input
+run (deterministic seed/configuration). The file downloaded through the app again
+matches c28dd4...bec4. Both videos played to completion, no page/media errors or
+mobile overflow; **no recovery or reattached capability was needed this time**.
+The final native-source normalization and signed input-hash check were exercised.
+See `hardened-worker-run.json`, its actual execution log and
+`hardened-browser-verification.json` in the evidence folder. Different CPU load
+makes timings incomparable as a controlled speed benchmark. This verifies the
+execution fix, not improved image quality or public availability.
+
+
+Two additional genuine no-person failures and retries also completed after that
+successful hardened-worker inference. The serial queue remains usable after both
+success and failure. Evidence: `after-success-failure-verification.json`. This
+addresses the observed runtime stall; it does not validate GPU hardware or durable
+public hosting. The public production deployment remains unchanged.

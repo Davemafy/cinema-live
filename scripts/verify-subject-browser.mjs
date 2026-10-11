@@ -5,6 +5,7 @@ const root=process.env.ARTIFACT_DIR||'artifacts/subject-aware/browser';
 await mkdir(root,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
 const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true});
+try {
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(base);
 await page.waitForFunction(()=>document.querySelector('input[value="subject-aware"]'));
@@ -13,7 +14,10 @@ await page.locator('input[type="file"]').setInputFiles('artifacts/subject-aware/
 await page.getByRole('radio',{name:/Directed light/}).check();
 await page.getByRole('button',{name:'Transform performance'}).waitFor({state:'visible'});
 await page.waitForFunction(()=>!document.querySelector('.transform-button').disabled,{},{timeout:60000});
+const submissionWait=page.waitForResponse(r=>r.url().includes('/api/jobs?') && r.request().method()==='POST');
 await page.getByRole('button',{name:'Transform performance'}).click();
+const submission=await submissionWait;
+if(submission.status()!==202) throw new Error('Genuine job submission failed: HTTP '+submission.status());
 await page.waitForFunction(()=>document.querySelector('.job-status'),{},{timeout:60000});
 console.log('Genuine subject-aware job submitted through browser; waiting for real inference');
 await page.screenshot({path:root+'/processing.png',fullPage:true});
@@ -59,4 +63,4 @@ await comparisonPage.waitForFunction(()=>document.querySelector('video').ended,{
 const abc=await comparisonPage.locator('video').evaluate(v=>({duration:v.duration,width:v.videoWidth,height:v.videoHeight,ended:v.ended,error:v.error?.message||null}));
 await writeFile(root+'/abc-playback.json',JSON.stringify(abc,null,2));
 console.log('Actual A/B/C full-clip playback:',JSON.stringify(abc));
-await browser.close();
+} finally { await browser.close(); }

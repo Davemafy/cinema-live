@@ -227,3 +227,30 @@ synthetic diagnostic clip produced the genuine no-visible-person error twice;
 retry became available each time. This is error-path evidence, not an AI-quality
 claim. Starting one fresh actual different-upload render through the hardened
 worker to verify the significant execution change. Cached weights only; CPU.
+
+
+Hardened worker genuine success verified: new browser upload → per-input IC-Light
+19-step actual CPU inference → 48-frame source-aware film → full comparison
+playback → exported download. No timeout recovery needed. 344.672 s total,
+268.765 s reference inference, 3.774 GiB peak RAM; output c28dd4...bec4 exactly
+reproduces the earlier actual same-input run, with matching downloaded bytes.
+Final native-source/hash-bound route was exercised. Rechecking empty-subject
+failure/retry AFTER this successful model run to prove the previous stall is gone.
+All 18 Python checks pass; 11 application tests, typecheck and build pass; pinned
+Kaggle launcher remotely fetched/hash-matched/compiled, GPU remains untested.
+Quality superiority remains unestablished; public hosting remains blocked.
+
+
+Post-success repeat check passed: two further real empty-subject jobs failed
+truthfully and made retry available after the successful hardened-worker image
+render. No queue/model-state stall recurred. Final source-aware local user journey
+is verified for actual uploads and downloadable media; camera hardware and
+public deployment were not verified here. Public worker connection unavailable;
+C3 visual quality does not beat B reliably. Stop further model expansion.
+
+Final deliverables: actual source code, A/B/C MP4 + all-frame/mask/reference
+artifacts, measured CPU logs, separate per-input authenticated worker, genuine
+local comparison/export and failure recovery, pinned single-cell GPU reproduction,
+accurate submission notes. Production/LTX unchanged; no paid calls or new compute.
+Next external action: authorized public worker hosting/secure connection and
+Devpost/YouTube publication of truthful evidence. No submission is claimed.
