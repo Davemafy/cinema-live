@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from IPython.display import display, FileLink, Image, Video
 
-COMMIT = "cdc97788be1bb707d8be8022202703859ecffa59"
-SHA256 = "8d821bcae70910e7f991a366fbeca3ab249275f0b1a59af9d428fc1bb920774a"
+COMMIT = "f2340eea052eb370ffd340836013af0aaa2ef5a3"
+SHA256 = "7a1141fe7b0c042c9fbc50ea5b4f4481d1a1df0959b98b195f5f1ef6d3f4e3b4"
 SOURCE = ""      # Empty = same licensed real dance input as the LTX selftest.
 LTX_RESULT = ""  # Optional local path to preserved LTX MP4 for a third column.
 PROMPT = ""      # Supply a matching descriptive prompt if SOURCE is changed.
