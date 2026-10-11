@@ -1,0 +1,38 @@
+name: Wan experiment syntax guard
+on:
+  push:
+    branches:
+      - experiment/wan-vace-quality
+  workflow_dispatch:
+
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile Kaggle experiment and launchers
+        run: |
+          python -m py_compile kaggle/experiments/wan_vace_quality.py kaggle/experiments/run_cell.py kaggle/experiments/run_cached_cell.py
+      - name: Verify device-boundary guard placement
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          path = Path("kaggle/experiments/wan_vace_quality.py")
+          tree = ast.parse(path.read_text())
+          functions = {n.name:n for n in tree.body if isinstance(n,ast.FunctionDef)}
+          assert "place_prompt_embeddings" in functions
+          assert "render" in functions
+          render = functions["render"]
+          stage_calls = [n for n in ast.walk(render) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id == "place_prompt_embeddings"]
+          assert len(stage_calls)==1
+          pipe_calls = [n for n in ast.walk(render) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id == "pipe"]
+          assert len(pipe_calls)==1
+          assert stage_calls[0].lineno < pipe_calls[0].lineno, "Must stage embeddings before invoking VACE"
+          helper = ast.get_source_segment(path.read_text(),functions["place_prompt_embeddings"])
+          assert ".to(device=device, dtype=dtype)" in helper
+          print("CPU/GPU guidance staging guard passed")
+          PY
