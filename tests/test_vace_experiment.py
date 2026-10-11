@@ -70,6 +70,34 @@ class ExperimentTests(unittest.TestCase):
         self.assertEqual(positive.shape, (1, 8, 16))
         self.assertTrue(torch.isfinite(positive).all() and torch.isfinite(negative).all())
 
+    def test_precomputed_embeddings_are_staged_for_video_gpu_execution(self):
+        # A CPU-only regression for the precise failure at denoising step zero.
+        # Without this transfer, precomputed embeddings stay on CPU even after
+        # Diffusers __call__ casts their dtype; CUDA time_proj then fails.
+        import torch
+        positive = torch.randn((1, 4, 16), dtype=torch.float32)
+        negative = torch.randn((1, 4, 16), dtype=torch.float32)
+        pos, neg = vace.place_prompt_embeddings(
+            positive, negative, torch.device("cpu"), torch.float16
+        )
+        self.assertEqual(pos.dtype, torch.float16)
+        self.assertEqual(neg.dtype, torch.float16)
+        self.assertEqual(pos.device.type, "cpu")
+        self.assertTrue(torch.isfinite(pos).all())
+        self.assertEqual(pos.shape, positive.shape)
+        with self.assertRaisesRegex(RuntimeError, "Non-finite"):
+            vace.place_prompt_embeddings(
+                torch.tensor([[[float("nan")]]]), negative, "cpu", torch.float16
+            )
+
+        # Assert that the production render function uses that helper before
+        # its full VACE pipeline invocation, independent of notebook runtime.
+        import inspect
+        render_source = inspect.getsource(vace.render)
+        self.assertLess(render_source.index("place_prompt_embeddings("),
+                        render_source.index("result = pipe("))
+        self.assertIn("pipe._execution_device", render_source)
+
     def test_tiny_actual_vace_graph_with_video_mask_reference(self):
         # Zero pretrained weights; no MP4 export. This tests the full conditioning
         # argument shape/graph, not motion preservation or cinematic output.
