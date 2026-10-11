@@ -23,7 +23,7 @@ export async function readUpload(request: Request): Promise<File> {
   }
   return file;
 }
-export async function normalize(file: File): Promise<NormalizedVideo> {
+export async function normalize(file: File, preserveResolution = false): Promise<NormalizedVideo> {
   const dir = await mkdtemp(join(tmpdir(), 'cinema-'));
   const input = join(dir, 'input');
   const output = join(dir, 'normalized.mp4');
@@ -44,15 +44,24 @@ export async function normalize(file: File): Promise<NormalizedVideo> {
     } catch { throw new AppError(415, 'This file could not be read as a video. Try an MP4 or WebM recording.'); }
     const stream = probe.streams?.find((s: { codec_type: string }) => s.codec_type === 'video');
     if (!stream || !stream.width || !stream.height || stream.width > 4096 || stream.height > 4096) throw new AppError(415, 'Use a video with dimensions up to 4096 pixels.');
+    if (preserveResolution && stream.width * stream.height > 1920 * 1080) throw new AppError(415, 'Subject-aware mode currently supports source dimensions up to 1080p.');
     const inputDuration = Number(probe.format?.duration || stream.duration);
+    const copyAudio = preserveResolution && probe.streams.some((s: { codec_type: string; codec_name: string }) => s.codec_type === 'audio' && s.codec_name === 'aac');
+    const frameRate = (value: string) => { const [a, b] = String(value).split('/').map(Number); return a / (b || 1); };
+    const nativeFps = frameRate(stream.avg_frame_rate);
+    const streamCopy = preserveResolution && stream.codec_name === 'h264' && stream.pix_fmt === 'yuv420p'
+      && stream.width % 2 === 0 && stream.height % 2 === 0 && nativeFps > 0
+      && Math.abs(nativeFps - frameRate(stream.r_frame_rate)) < 0.01
+      && !stream.side_data_list?.some((s: { rotation?: number }) => s.rotation);
     // MediaRecorder WebM can have no duration metadata. Bound decode with -t instead.
     if (Number.isFinite(inputDuration) && inputDuration < 0.35) throw new AppError(400, 'Record at least half a second of performance.');
     try {
       await run(ffmpegPath, ['-hide_banner', '-loglevel', 'error', '-nostdin', '-protocol_whitelist', 'file', '-i', input,
         '-t', String(CLIP_SECONDS), '-map', '0:v:0', '-map', '0:a:0?',
-        '-vf', 'scale=w=768:h=768:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=ceil(iw/32)*32:ceil(ih/32)*32:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24',
-        '-c:v', 'libx264', '-preset', 'fast', '-crf', '20', '-maxrate', '2000k', '-bufsize', '4000k', '-pix_fmt', 'yuv420p',
-        '-c:a', 'aac', '-b:a', '96k', '-movflags', '+faststart', '-threads', '2', '-y', output], { timeout: 40_000, maxBuffer: 1024 * 1024 });
+        ...(streamCopy ? ['-c:v', 'copy'] : [
+        '-vf', preserveResolution ? 'pad=ceil(iw/2)*2:ceil(ih/2)*2,setsar=1,fps=24' : 'scale=w=768:h=768:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=ceil(iw/32)*32:ceil(ih/32)*32:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24',
+        '-c:v', 'libx264', '-preset', 'fast', '-crf', '20', '-maxrate', '2000k', '-bufsize', '4000k', '-pix_fmt', 'yuv420p']),
+        '-c:a', copyAudio ? 'copy' : 'aac', ...(copyAudio ? [] : ['-b:a', '96k']), '-movflags', '+faststart', '-threads', '2', '-y', output], { timeout: 40_000, maxBuffer: 1024 * 1024 });
     } catch { throw new AppError(422, 'Video preprocessing failed. Try recording again or uploading a different clip.'); }
     const { stdout } = await run(probePath, ['-v', 'error', '-show_streams', '-show_format', '-of', 'json', output], { timeout: 5000 });
     const normalized = JSON.parse(stdout);
@@ -61,6 +70,6 @@ export async function normalize(file: File): Promise<NormalizedVideo> {
     const duration = Number(normalized.format.duration);
     if (!bytes.length || duration < 0.35 || bytes.length > MAX_UPLOAD_BYTES) throw new AppError(422, 'Unable to create a compatible short clip. Try a simpler recording.');
     console.info(JSON.stringify({ event: 'video_normalized', width: v.width, height: v.height, duration, bytes: bytes.length }));
-    return { bytes, width: v.width, height: v.height, duration, inputDuration: Number.isFinite(inputDuration) ? inputDuration : duration, fps: 24 };
+    return { bytes, width: v.width, height: v.height, duration, inputDuration: Number.isFinite(inputDuration) ? inputDuration : duration, fps: frameRate(v.avg_frame_rate) };
   } finally { await rm(dir, { recursive: true, force: true }); }
 }

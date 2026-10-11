@@ -28,7 +28,7 @@ def run(command):
 
 
 def probe(path):
-    return json.loads(run(["ffprobe", "-v", "error", "-show_streams", "-show_format", "-of", "json", path]))
+    return json.loads(run(["ffprobe", "-protocol_whitelist", "file,pipe", "-v", "error", "-show_streams", "-show_format", "-of", "json", path]))
 
 
 def read_video(path):
@@ -49,7 +49,7 @@ def read_video(path):
     duration = float(info["format"]["duration"])
     if duration > 10 or duration <= 0:
         raise RuntimeError("Prototype input must be a real video of ten seconds or less")
-    raw = run(["ffmpeg", "-v", "error", "-nostdin", "-threads", "2", "-i", path,
+    raw = run(["ffmpeg", "-v", "error", "-nostdin", "-threads", "2", "-protocol_whitelist", "file,pipe", "-i", path,
                "-map", "0:v:0", "-an", "-fps_mode", "passthrough", "-pix_fmt", "rgb24", "-f", "rawvideo", "pipe:1"])
     size = width*height*3
     if len(raw) % size or not raw:

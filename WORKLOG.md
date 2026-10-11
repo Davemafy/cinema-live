@@ -162,3 +162,35 @@ existing Kaggle GPU session. It reuses /tmp Wan environment/weights, creates one
 restyled-reference render, preserves errors/evidence, and auto-selects only a
 hash-matched baseline with matching source/seed/settings. Inspect actual GPU MP4
 before integration; no improved generative result is claimed.
+
+## Subject-aware sprint — 2026-10-11
+
+Continued from remote preservation branch d09fc90 on
+`experiment/subject-aware-cinematography`; production/LTX worker untouched.
+Implemented small automatic LRASPP people segmentation, source-conditioned actual
+IC-Light/SD1.5 reference inference, RGB edge/GrabCut matte refinement, existing
+confidence-checked optical flow, moving silhouette-based 2.5D lighting and native
+source compositing. This is not physically accurate relighting or measured depth.
+
+Real CPU image inference succeeded (206.131 s, pinned model revisions, 19 actual
+steps). Real A/B/C candidate completed 120 frames, 854x480, 24000/1001 fps; full
+media decode and start/middle/end/all-frame inspection. New C3 hash307dbf...ad81.
+Reference reused only for same-source prototype revisions. Visible independent
+foreground/background response; remaining halos/border changes prevent claiming
+an overall cinematic improvement over B. Stop new-model expansion for deadline.
+
+Integrated a separate authenticated queued worker into the existing treatment
+controls, explicit mode routing and source-hash-bound result validation. No LTX
+fallback for subject-aware requests. A genuinely different 2 s browser upload
+created a new IC-Light reference and completed the worker in 611.654 s under CPU
+contention (3.789 GiB peak RAM). Original test timed out at 600 s; recovered that
+actual job to verify original/output playback, download hash c28dd4...bec4,
+390px mobile viewport without overflow, no page/media errors. Public Vercel was
+not changed; no authorized public worker endpoint/public port forwarding exists.
+Detailed evidence/limitations: docs/subject-aware-cinematography.md.
+
+Existing production build, typecheck and 10 application tests passed before the
+final caption/source-hash hardening. Fifteen Python tests passed. Rechecking final
+changes now. Next concrete action: commit/push code+actual evidence, pinned
+isolated reproduction cell, update honest submission notes; do not claim public
+activation or quality superiority without further real verification.

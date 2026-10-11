@@ -65,17 +65,20 @@ export function trustedMediaUrl(value: string) {
   const falAllowed = u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media');
   let kaggleAllowed = false;
   try {
-    const configured = process.env.CINEMA_KAGGLE_URL;
+    for (const configured of [process.env.CINEMA_KAGGLE_URL, process.env.CINEMA_CINEMATOGRAPHY_URL]) {
     if (configured) {
       const backend = new URL(configured);
-      kaggleAllowed =
+      kaggleAllowed ||=
         u.origin === backend.origin &&
         /^\/v1\/jobs\/[0-9a-f]{24}\/video$/.test(u.pathname) &&
         /^\d{9,12}$/.test(u.searchParams.get('e') || '') &&
         /^[0-9a-f]{64}$/.test(u.searchParams.get('s') || '');
     }
+    }
   } catch { /* Invalid configuration must never open another host. */ }
-  if (u.protocol !== 'https:' || u.username || u.password || u.port || !(falAllowed || kaggleAllowed)) {
+  const local = process.env.NODE_ENV !== 'production' && process.env.CINEMA_ALLOW_LOCAL_ENGINE === 'true'
+    && ['127.0.0.1', 'localhost'].includes(u.hostname) && u.protocol === 'http:' && kaggleAllowed;
+  if ((!local && (u.protocol !== 'https:' || u.port)) || u.username || u.password || !(falAllowed || kaggleAllowed)) {
     throw new AppError(502, 'The inference provider returned an unsupported media address.');
   }
   return u.href;

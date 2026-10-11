@@ -3,6 +3,12 @@
 Record one performance. Explore a cinematic treatment from the entire recorded
 clip. Compare the source and result, and download the film.
 
+**Subject-aware successor experiment:** actual CPU IC-Light inference, automatic
+moving-person segmentation and independent foreground/background lighting now
+work through the local app. [Real A/B/C media, measured results and limitations](docs/subject-aware-cinematography.md).
+Matte artifacts remain; overall improvement over the prior output is not proven.
+Public worker hosting is blocked and production is unchanged.
+
 **This experiment branch includes an actual AI-image-directed, source-preserving
 MP4**, with original dimensions, timing and source detail. See
 [the experiment evidence](docs/preservation-aware-experiment.md). It is an offline
