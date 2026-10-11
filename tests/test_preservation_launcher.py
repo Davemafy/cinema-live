@@ -22,6 +22,17 @@ class LauncherTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(data).hexdigest(),sha)
                 if path.endswith(".py"):compile(data,path,"exec")
 
+    def test_wan_cache_is_optional_for_cpu_preservation(self):
+        import inspect
+        main=inspect.getsource(launcher.main)
+        self.assertIn("wan_available=python.is_file() and cache.is_dir()",main)
+        self.assertIn("flow_python=str(python) if wan_available else sys.executable",main)
+        self.assertIn('if wan_available:',main)
+        self.assertIn("GENERATIVE WAN SKIPPED",main)
+        self.assertIn("source-preserving/treated-source.mp4",main)
+        self.assertNotIn("Existing Wan /tmp venv/cache unavailable",main)
+        self.assertIn("comparison-contact-sheet.jpg",main)
+
     def test_only_completed_matching_baseline_is_selected(self):
         # Byte strings are metadata-selection fixtures, not playable video claims.
         with tempfile.TemporaryDirectory() as tmp:
