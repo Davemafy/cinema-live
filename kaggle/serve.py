@@ -201,8 +201,9 @@ def generate():
             from diffusers.utils import export_to_video
             say(f"GENERATING {jid}: {FRAMES} frames / {STEPS} steps / conditioning strength {STRENGTH}")
             output = pipe(
-                video=source_frames,
-                strength=0.65,
+                # The pipeline expects a list of conditioning videos,
+                # each video itself being a list of PIL frames.
+                video=[source_frames],
                 prompt=job["prompt"],
                 negative_prompt="color, colored footage, oversaturated, blurry, jitter, anatomy distortions, visual glitches, captions, text",
                 height=HEIGHT, width=WIDTH, num_frames=FRAMES,
