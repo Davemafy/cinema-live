@@ -267,6 +267,28 @@ def heartbeat(stage, torch):
         stop.set(); thread.join(timeout=1)
 
 
+def place_prompt_embeddings(positive, negative, device, dtype):
+    """Stage text on CPU, then move both embeddings to the denoiser's device.
+
+    Diffusers 0.36 WanVACEPipeline.encode_prompt passes supplied tensors through
+    unchanged; its __call__ only casts dtype, NOT device. Offloaded CUDA models
+    then fail in WanTimeTextImageEmbedding.time_proj if embeds remain on CPU.
+    """
+    import torch
+    if positive is None or negative is None:
+        raise RuntimeError("Both CFG embeddings are required")
+    device = torch.device(device)
+    positive = positive.to(device=device, dtype=dtype)
+    negative = negative.to(device=device, dtype=dtype)
+    if positive.device != device or negative.device != device:
+        raise RuntimeError("Prompt embeddings must share the GPU execution device")
+    if positive.dtype != dtype or negative.dtype != dtype:
+        raise RuntimeError("Prompt embedding precision mismatch")
+    if not torch.isfinite(positive).all().item() or not torch.isfinite(negative).all().item():
+        raise RuntimeError("Non-finite embeddings after GPU transfer")
+    return positive, negative
+
+
 def render(args, out):
     import torch
     from diffusers import AutoencoderKLWan, WanVACEPipeline, UniPCMultistepScheduler
@@ -340,6 +362,14 @@ def render(args, out):
         if elapsed > 1800:
             raise TimeoutError("Render exceeded 30-minute GPU stage budget. Retain LTX; do not repeat unchanged.")
         return callback_kwargs
+    # UMT5 was deliberately run on CPU; the video transformer runs on CUDA.
+    # Upstream Diffusers does NOT move user-supplied embeds to the model device.
+    model_device = pipe._execution_device
+    model_dtype = pipe.transformer.dtype
+    positive, negative = place_prompt_embeddings(positive, negative, model_device, model_dtype)
+    say(f"GUIDANCE PREFLIGHT OK: positive={positive.device}/{positive.dtype}, "
+        f"negative={negative.device}/{negative.dtype}, model_execution={model_device}")
+
     say("ONE CONTROLLED RENDER STARTING; no retry, no post-grade")
     with heartbeat("GPU RENDER (includes conditioning/decoding)", torch), torch.inference_mode():
         result = pipe(
