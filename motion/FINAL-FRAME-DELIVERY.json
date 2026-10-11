@@ -1,0 +1,125 @@
+{
+  "branch": "motion/the-final-frame",
+  "base": "ea61f59a5eb279fdf3e845bcf36f0b47f0851ff1",
+  "heroPlate": "Explicitly labeled original temporary AI-generated artwork; not verified CINEMA inference output",
+  "distribution": "Final rendered binaries, portable preview and source are delivered as attachments and in cinema-final-production.zip; source, provenance and QA are committed in this branch.",
+  "artifacts": [
+    {
+      "name": "cinema-opening-final.mp4",
+      "bytes": 3357369,
+      "sha256": "204976f1af89d81e0442939009364bc20298e1a92c59569dc689e4866106a368"
+    },
+    {
+      "name": "cinema-outro-final.mp4",
+      "bytes": 2943788,
+      "sha256": "1c9d2366f3fd54b0db694e919cc374a0830f8b2108e0c52cf59ea7d5fe0dd962"
+    },
+    {
+      "name": "cinema-combined-final.mp4",
+      "bytes": 6074198,
+      "sha256": "f09526ceef699e563cb35f5fdcee273f28ced5e63f0bd2791f515cb03e1ea3bd"
+    },
+    {
+      "name": "cinema-browser-preview.html",
+      "bytes": 5954424,
+      "sha256": "975035c3770e1712ffb55f1efe445c837bcf01800533dd02b9983c4fdd595eaf"
+    },
+    {
+      "name": "before-after-opening.jpg",
+      "bytes": 196120,
+      "sha256": "9d29c132c5320dbd8d62bfe083bb68e0b9fe2ab1a31afe2a87926d2d227ca541"
+    },
+    {
+      "name": "before-after-outro.jpg",
+      "bytes": 229557,
+      "sha256": "427798f6117c9d88962de27677d06873b244f722843602ab51542164fae413f6"
+    },
+    {
+      "name": "cinema-final-production.zip",
+      "bytes": 24290738,
+      "sha256": "f1d73fe4bf083f3f18e5cec6f85c65ba117a94f51ba85a40b2614206522e66a3"
+    }
+  ],
+  "mediaChecks": [
+    {
+      "name": "cinema-opening-final.mp4",
+      "width": 1920,
+      "height": 1080,
+      "fps": "24/1",
+      "frames": 120,
+      "duration": 5.0,
+      "audioCodec": "aac",
+      "channels": 2,
+      "sampleRate": "48000",
+      "firstFrameMax": 0,
+      "lastFrameMax": 0,
+      "peakDBFS": -9.000221252441406,
+      "audioRMS": 0.05780304968357086,
+      "fullDecode": "pass"
+    },
+    {
+      "name": "cinema-outro-final.mp4",
+      "width": 1920,
+      "height": 1080,
+      "fps": "24/1",
+      "frames": 240,
+      "duration": 10.0,
+      "audioCodec": "aac",
+      "channels": 2,
+      "sampleRate": "48000",
+      "firstFrameMax": 255,
+      "lastFrameMax": 0,
+      "peakDBFS": -11.602940559387207,
+      "audioRMS": 0.037576306611299515,
+      "fullDecode": "pass"
+    },
+    {
+      "name": "cinema-combined-final.mp4",
+      "width": 1920,
+      "height": 1080,
+      "fps": "24/1",
+      "frames": 372,
+      "duration": 15.5,
+      "audioCodec": "aac",
+      "channels": 2,
+      "sampleRate": "48000",
+      "firstFrameMax": 0,
+      "lastFrameMax": 0,
+      "peakDBFS": -9.000221252441406,
+      "audioRMS": 0.04462072253227234,
+      "fullDecode": "pass"
+    }
+  ],
+  "browserChecks": {
+    "errors": [],
+    "fontLoaded": true,
+    "frame": 80,
+    "repeatSeekByteIdentical": true
+  },
+  "playbackChecks": [
+    {
+      "name": "cinema-opening-final.mp4",
+      "duration": 5.013333,
+      "width": 1920,
+      "height": 1080,
+      "totalFrames": 120,
+      "droppedFrames": 0
+    },
+    {
+      "name": "cinema-outro-final.mp4",
+      "duration": 10.005333,
+      "width": 1920,
+      "height": 1080,
+      "totalFrames": 240,
+      "droppedFrames": 0
+    },
+    {
+      "name": "cinema-combined-final.mp4",
+      "duration": 15.509333,
+      "width": 1920,
+      "height": 1080,
+      "totalFrames": 372,
+      "droppedFrames": 0
+    }
+  ]
+}

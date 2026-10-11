@@ -13,7 +13,8 @@ import {RectAreaLightUniformsLib} from 'three/examples/jsm/lights/RectAreaLightU
 import {ribbon,smooth} from './geometry';
 import {filmMaterial} from './material';
 import {ImageFragments,LogoFragments} from './Fragments';
-export function Rig({t,shot}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending'}){
+export type Director={position:THREE.Vector3,target:THREE.Vector3,fov:number,focus:number,environment?:number,aperture?:number,bloom?:number};
+export function Rig({t,shot,director}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending',director?:Director}){
  const {gl,scene,camera,size}=useThree();
  const composer=useMemo(()=>{RectAreaLightUniformsLib.init();gl.toneMapping=THREE.ACESFilmicToneMapping;gl.toneMappingExposure=1.05;
  const env=new THREE.Scene();env.background=new THREE.Color('#040505');
@@ -49,7 +50,16 @@ export function Rig({t,shot}:{t:number,shot?:'A'|'B'|'C'|'opening'|'ending'}){
   (composer.passes[1] as any).uniforms.maxblur.value=.009;
   (composer.passes[2] as UnrealBloomPass).strength=.12;
  }
- },[t,camera,composer,shot]);
+ if(director){
+  camera.position.copy(director.position);camera.lookAt(director.target);
+  cam.fov=director.fov;cam.updateProjectionMatrix();
+  scene.environmentIntensity=director.environment??.9;scene.environmentRotation.y=.24;
+  (composer.passes[1] as any).uniforms.focus.value=director.focus;
+  (composer.passes[1] as any).uniforms.aperture.value=director.aperture??.00006;
+  (composer.passes[1] as any).uniforms.maxblur.value=.007;
+  (composer.passes[2] as UnrealBloomPass).strength=director.bloom??.075;
+ }
+ },[t,camera,composer,shot,director]);
  useFrame(()=>composer.render(),1);return null;
 }
 function Ribbons({t,closing}:{t:number,closing:boolean}){
