@@ -6,6 +6,7 @@ import { useCamera } from '@/hooks/useCamera';
 import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { useDownload } from '@/hooks/useDownload';
 import { Comparison } from './Comparison';
+import { VerifiedExperiment } from './VerifiedExperiment';
 import { Arrow } from './Arrow';
 
 export default function Studio() {
@@ -87,6 +88,7 @@ export default function Studio() {
       </section>
     </div>
     {succeeded && cinema.job?.videoUrl && <section className="result-section" aria-label="Rendered film"><div className="result-heading"><div><p className="eyebrow">RENDER COMPLETE</p><h2>Your cinematic take.</h2></div><div className="result-actions"><button className="primary" disabled={exporter.downloading} onClick={() => exporter.download(`/api/export?token=${encodeURIComponent(cinema.job!.exportToken!)}`, `cinema-${cinema.job!.id}.mp4`)}>{exporter.downloading ? "Downloading film…" : "Download film ↓"}</button><button onClick={() => { camera.release(); cinema.reset(); }}>New performance</button></div></div><Comparison source={normalized} result={cinema.job.videoUrl} />{exporter.error && <p className="error" role="alert">{exporter.error}</p>}<details className="render-details"><summary>Generation details</summary><p>Model: {cinema.job.model}<br />Job: {cinema.job.id}<br />Elapsed until result check: {cinema.job.durationSeconds} seconds<br />Seed: {cinema.job.seed ?? String(cinema.job.config.seed)}{cinema.job.inferenceSeconds !== undefined && <><br />Provider-measured inference: {cinema.job.inferenceSeconds.toFixed(1)} seconds</>}</p><pre>{JSON.stringify(cinema.job.config, null, 2)}</pre><p>Download promptly. Job links expire after 24 hours; provider media retention is not guaranteed.</p><button onClick={async () => { cinema.checkAgain(); }}>Refresh result status</button></details></section>}
+    <VerifiedExperiment />
     <footer><span>CINEMA / BANANA HACKS 2026</span><span>Capture. Condition. Compare. Export.</span></footer>
   </main>;
 }
