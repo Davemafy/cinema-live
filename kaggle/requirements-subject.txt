@@ -1,0 +1,15 @@
+# Install platform-compatible torch/torchvision first; never replace LTX's venv.
+# Verified CPU pair: torch 2.5.1+cpu / torchvision 0.20.1+cpu.
+diffusers==0.36.0
+transformers==4.49.0
+huggingface-hub==0.34.4
+accelerate==1.10.1
+safetensors==0.6.2
+tokenizers==0.21.4
+opencv-python-headless==4.11.0.86
+ftfy==6.3.1
+numpy==2.3.5
+Pillow==12.3.0
+fastapi==0.141.1
+uvicorn==0.52.1
+python-multipart==0.0.32

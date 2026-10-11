@@ -28,3 +28,19 @@ The result was browser-played to completion and FFprobe-validated at 854×480, 1
 A visitor cannot be promised a fresh image-AI cinematic film on public Vercel; model-serving integration and reliable live availability are unfinished. LTX and Wan VACE were executed on Kaggle GPUs, but their weak visual results were not adopted. Never confuse the offline evidence movie with a new public render.
 
 The real technical work is preserving the recorded performance while following an AI-originated visual direction, not a thin text-to-video API wrapper.
+
+## Subject-aware successor — real local prototype, not a public replacement
+
+`experiment/subject-aware-cinematography` adds an actual IC-Light/SD1.5 reference
+for each input, automatic moving-person segmentation, silhouette-based spatial
+lighting, independent background exposure and source-frame compositing. This is
+not physically accurate relighting. The genuine A/B/C film, all-frame inspection,
+model revisions, CPU measurements and actual fresh-upload local app verification
+are in `docs/subject-aware-cinematography.md` and `docs/evidence/subject-aware-v1`.
+
+A different 2-second upload generated a new reference and film, played to
+completion and downloaded with matching bytes through the local app. Public
+activation is blocked by missing reachable worker hosting. Production and working
+LTX remain unchanged. Matte artifacts prevent claiming overall visual improvement
+over the previous result; this remains an experiment, not the submission's quality
+winner. Keep the verified offline demo clearly labeled. No submission occurred.

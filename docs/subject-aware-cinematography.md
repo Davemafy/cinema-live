@@ -100,15 +100,19 @@ The existing radio group gains **Directed light**. Its separate availability and
 provider route never dispatch to LTX or fal. The server preserves compatible
 native source video or normalizes recorder timing/orientation with no downscale,
 then calls `kaggle/cinematography_worker.py`. Each new random job directory creates
-its own actual reference. An authenticated serial queue gives real queued,
+its own actual reference. An authenticated serial queue uses a fresh bounded subprocess for each render and gives real queued,
 rendering, failed and succeeded states. Successful metadata must prove image-AI
 execution and match the signed submitted source hash before result acceptance.
 Exports use signed media URLs and the existing download proxy.
 
 For a local worker, privately configure `CINEMA_SUBJECT_TOKEN` (32+ random
 characters), `CINEMA_SUBJECT_ORIGIN=http://127.0.0.1:8892`, and
-`CINEMA_SUBJECT_CACHE` to the weights cache. Start with the compatible Python
-installation:
+`CINEMA_SUBJECT_CACHE` to the weights cache. Use a separate Python 3.12 environment (at least 6 GiB host RAM; roughly 3.8 GB
+weights and additional output space). The actual CPU run used PyTorch 2.5.1+cpu
+and torchvision 0.20.1+cpu. Install that compatible pair from the official PyTorch
+CPU wheel index, then `pip install -r kaggle/requirements-subject.txt`. CUDA users
+must keep a matching torch/torchvision pair; do not replace the working LTX venv.
+Start with that compatible Python installation:
 
 ```sh
 python -u kaggle/cinematography_worker.py
@@ -140,3 +144,28 @@ explicitly labeled and separate from user generation.
 See the evidence credits for source/model attribution. CINEMA contributes capture,
 per-input reference orchestration, semantic/flow transport, source compositing,
 comparison and export; it did not train these pretrained models.
+
+
+## Isolated Kaggle reproduction
+
+`kaggle/experiments/run_subject_cell.py` pins the already published source commit
+and SHA256 of every code/video asset. The delivered single notebook cell also
+pins the launcher itself. It checks disk, host RAM and at least 5 GiB available
+on one GPU before downloads. It reuses existing subject-model caches and creates
+an isolated venv inheriting Kaggle CUDA torch, without touching LTX/Wan venvs.
+It performs exactly one fresh source-conditioned IC-Light image render and
+exports the actual film, A/B/C comparison and beginning/middle/end frames. It does
+not use the stored C reference or movie as generation output. A 30-minute render
+limit preserves error logs and stops without claiming success on failure.
+
+The cell is syntax/API/integrity checked here; **Kaggle GPU execution has not run**.
+Its memory gate is conservative, not proof of T4 fit or speed. No public worker
+or production deployment is started by the cell. Model caches are never deleted.
+
+
+Repeat-job validation found a stall when PyTorch/diffusion state was reused in a
+background worker thread. The worker now runs each job in a fresh subprocess,
+retains its execution log and enforces a 30-minute hard timeout. A failed job
+returns a truthful failure instead of permanently holding a loading state. The
+successful fresh-upload measurements above describe the first worker version;
+the hardened worker is checked separately for empty-subject failure and retry.

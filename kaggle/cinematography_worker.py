@@ -7,6 +7,7 @@ import queue
 import re
 import secrets
 import sys
+import subprocess
 import threading
 import time
 import traceback
@@ -15,8 +16,7 @@ from hashlib import sha256
 from fastapi import FastAPI,UploadFile,File,Form,Header,HTTPException
 from fastapi.responses import FileResponse
 
-sys.path.insert(0,str(Path(__file__).resolve().parent/"experiments"))
-from subject_cinematography import process
+ENGINE=Path(__file__).resolve().parent/"experiments/subject_cinematography.py"
 
 ROOT=Path(os.environ.get("CINEMA_SUBJECT_WORKDIR","/tmp/cinema-subject-jobs"));ROOT.mkdir(parents=True,exist_ok=True)
 TOKEN=os.environ.get("CINEMA_SUBJECT_TOKEN","")
@@ -87,7 +87,19 @@ def generate():
         jid=work.get()
         try:
             with lock:jobs[jid]["state"]="rendering";job=jobs[jid]
-            result=process(job["source"],job["folder"]/"render",cache=CACHE)
+            # A fresh process bounds memory and avoids reusing PyTorch/OpenMP
+            # state from a previous diffusion run in the queue thread.
+            render=job["folder"]/"render"
+            with (job["folder"]/"execution.log").open("w") as log:
+                try:
+                    completed=subprocess.run([sys.executable,"-u",str(ENGINE),"--source",str(job["source"]),
+                        "--out",str(render),"--cache",str(CACHE)],stdout=log,stderr=subprocess.STDOUT,timeout=1800)
+                except subprocess.TimeoutExpired:
+                    raise RuntimeError("Subject-aware render exceeded 30 minutes; stopped safely. Retry or use a shorter clip.")
+            if completed.returncode:
+                lines=(job["folder"]/"execution.log").read_text(errors="replace").splitlines()
+                raise RuntimeError(lines[-1][:350] if lines else "Subject-aware process failed; inspect worker logs")
+            result=json.loads((render/"run.json").read_text())
             with lock:
                 jobs[jid].update(state="succeeded",seconds=result["totalSeconds"],config={
                     "mode":"subject-aware","imageAi":result["imageAi"],"segmentationModel":result["segmentationModel"],

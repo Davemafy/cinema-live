@@ -194,3 +194,36 @@ final caption/source-hash hardening. Fifteen Python tests passed. Rechecking fin
 changes now. Next concrete action: commit/push code+actual evidence, pinned
 isolated reproduction cell, update honest submission notes; do not claim public
 activation or quality superiority without further real verification.
+
+Final application verification: 11 TS/application tests, typecheck and production
+build pass. Fifteen Python tests pass; Python dependency check reports no broken
+requirements. The complete actual A/B/C comparison played to its end in Chromium
+(5.005 s, 1920x400, no media error). Found and fixed comparison labels that had
+incorrectly said Silver screen/normalized input; restored selected treatment on
+session recovery. Saved genuine desktop/mobile screenshots after the fix.
+
+Terminal GitHub credential is invalid. The connected GitHub app is authorized and
+is publishing the exact Git tree instead; do not expose the invalid credential
+or request another ordinary push approval. Production has not been deployed.
+
+
+Published source/evidence with the connected GitHub app at f8a231e6091a81e1f68b346b0c86238353983717;
+remote tree exactly matched local committed tree 09d39040c1c2521deae55e363437a257f0dd6cbe.
+Added one isolated pinned Kaggle IC-Light reproduction (not another VACE run),
+CPU-tested exact source manifest/cache reuse/one-GPU memory rejection. Three
+launcher tests and three compositing tests pass. No Kaggle GPU execution claimed.
+CPU API/library checks and 11 application tests/production build are already
+verified. Publishing final dependency/launcher/documentation follow-up now.
+
+
+Repeat-job check found a real stall in the threaded in-process model worker after
+its first completed image run. Changed execution to one fresh subprocess per
+queued job, with a 30-minute hard timeout and per-job logs. Existing completed
+media was preserved before restarting only the local worker. Checking repeated
+empty-subject errors through the app now; no additional model expansion.
+
+Hardened-worker failure/retry check passed through the actual browser: an empty
+synthetic diagnostic clip produced the genuine no-visible-person error twice;
+retry became available each time. This is error-path evidence, not an AI-quality
+claim. Starting one fresh actual different-upload render through the hardened
+worker to verify the significant execution change. Cached weights only; CPU.
