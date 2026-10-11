@@ -379,15 +379,20 @@ def bootstrap(args, out):
     # Check the existing CUDA runtime before installing anything or fetching weights.
     hardware(out)
     env_dir = out.parent / "cinema-vace-venv"
-    command([sys.executable, "-m", "venv", "--system-site-packages", env_dir], timeout=120)
+    # Kaggle's Python 3.13 runtime can fail when venv runs ensurepip.
+    # Skip ensurepip and install via the already-working outer pip instead.
+    command([sys.executable, "-m", "venv", "--clear", "--without-pip",
+             "--system-site-packages", env_dir], timeout=120)
     interpreter = env_dir / "bin/python"
+    say("VENV CREATED WITHOUT ENSUREPIP")
     import torch
     # Hold Kaggle's CUDA PyTorch version fixed. Never install/replace CUDA wheels.
     constraint = out / "torch-constraint.txt"
     constraint.write_text("torch==" + torch.__version__ + "\n")
     pins = [f"{name}=={version}" for name, version in PINS.items()]
     say("INSTALL PINNED SMALL LIBRARIES in isolated venv; retain Kaggle PyTorch")
-    subprocess.run([str(interpreter), "-m", "pip", "install", "--disable-pip-version-check",
+    subprocess.run([sys.executable, "-m", "pip", "--python", str(env_dir),
+                    "install", "--disable-pip-version-check", "--no-cache-dir",
                     "--constraint", str(constraint), *pins], check=True, timeout=600)
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
