@@ -1,4 +1,4 @@
-"""CINEMA temporary Kaggle image-to-video job worker. First-frame conditioning only."""
+"""CINEMA temporary Kaggle motion-conditioned video generation worker."""
 import hmac, io, os, queue, re, secrets, subprocess, threading, time, sys
 from hashlib import sha256
 from pathlib import Path
@@ -84,7 +84,7 @@ def video(jid: str, e: int, s: str):
 # Quality profile: real source-video conditioning and a longer shot.
 # 49 frames @12 fps = 4.08 seconds. 20 steps; 384x256 for T4 memory.
 WIDTH, HEIGHT, FPS, FRAMES, STEPS = 384, 256, 12, 49, 20
-STRENGTH = 0.58
+STRENGTH = 0.65
 
 def read_source_frames(path):
     """Sample the uploaded clip, retaining its motion for video conditioning."""
@@ -160,15 +160,24 @@ def generate():
             source_frames = read_source_frames(job["source"])
             say(f"SOURCE VIDEO: {len(source_frames)} frames retained for motion conditioning")
             pipe = load()
+            # Validate signature before scheduling expensive inference.
+            import inspect
+            required_args = {"video", "strength", "denoise_strength", "frame_rate",
+                             "num_frames", "num_inference_steps", "image_cond_noise_scale"}
+            signature_args = set(inspect.signature(pipe.__call__).parameters)
+            missing = required_args - signature_args
+            if missing:
+                raise RuntimeError("Unsupported diffusers LTXConditionPipeline arguments: " + ", ".join(sorted(missing)))
             from diffusers.utils import export_to_video
-            say(f"GENERATING {jid}: {FRAMES} frames / {STEPS} steps / strength {STRENGTH}")
+            say(f"GENERATING {jid}: {FRAMES} frames / {STEPS} steps / conditioning strength {STRENGTH}")
             output = pipe(
                 video=source_frames,
                 prompt=job["prompt"],
                 negative_prompt="color, colored footage, oversaturated, blurry, jitter, anatomy distortions, visual glitches, captions, text",
                 height=HEIGHT, width=WIDTH, num_frames=FRAMES,
                 frame_rate=FPS, num_inference_steps=STEPS,
-                denoise_strength=STRENGTH,
+                strength=STRENGTH,
+                denoise_strength=1.0,
                 guidance_scale=5.0, guidance_rescale=0.7,
                 decode_timestep=0.05, decode_noise_scale=0.025,
                 image_cond_noise_scale=0.025,
@@ -188,7 +197,9 @@ def generate():
                 JOBS[jid]["state"] = "failed"
                 JOBS[jid]["error"] = f"{type(ex).__name__}: {str(ex)[:350]}"
             if PIPE is None: MODEL_STATE = "failed"
-            say("FAILED " + jid + ": " + str(ex))
+            # Include stack frames so notebook failures are diagnosable without blind retries.
+            import traceback
+            say("FAILED " + jid + ": " + traceback.format_exc(limit=4)[-1600:])
         finally:
             Q.task_done()
 
