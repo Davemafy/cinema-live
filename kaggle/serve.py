@@ -121,6 +121,26 @@ def finish_noir(raw_path, final_path):
     ]
     subprocess.run(command, capture_output=True, timeout=120, check=True)
 
+def preflight():
+    """Validate API and scheduler WITHOUT loading the expensive model weights."""
+    import inspect
+    from diffusers import LTXConditionPipeline, FlowMatchEulerDiscreteScheduler
+    required = {
+        "video", "strength", "prompt", "negative_prompt", "height", "width",
+        "num_frames", "frame_rate", "num_inference_steps", "denoise_strength",
+        "guidance_scale", "guidance_rescale", "decode_timestep",
+        "decode_noise_scale", "image_cond_noise_scale",
+    }
+    missing = sorted(required - set(inspect.signature(LTXConditionPipeline.__call__).parameters))
+    if missing:
+        raise RuntimeError("Diffusers pipeline API changed: missing " + ", ".join(missing))
+    scheduler = FlowMatchEulerDiscreteScheduler(use_dynamic_shifting=False)
+    scheduler.set_timesteps(num_inference_steps=STEPS, device="cpu")
+    if len(scheduler.timesteps) != STEPS:
+        raise RuntimeError("Scheduler preflight returned wrong timestep count")
+    say(f"PREFLIGHT OK: {STEPS} scheduler steps, video-conditioning API compatible")
+
+
 def load():
     global PIPE, MODEL_STATE
     with LOAD_LOCK:
@@ -274,6 +294,7 @@ def main():
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         PORT = listener.getsockname()[1]
+    preflight()
     say(f"STARTING CINEMA TEMPORARY KAGGLE API on local port {PORT}")
     threading.Thread(target=generate, daemon=True).start()
     server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=PORT, log_level="warning"))
