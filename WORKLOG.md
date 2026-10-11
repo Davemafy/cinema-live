@@ -90,3 +90,30 @@ account access is unresolved. Verify a genuine source-conditioned output before
 enabling rendering or claiming the full application is operational.
 
 Deadline supplied: 2026-10-12 03:59 UTC (04:59 WAT).
+
+## Quality sprint — 2026-10-11
+
+Fetched current remote state. The owner's working LTX backend is on
+`kaggle-worker-demo` at 02bc269; the owner reports a real 49-frame/12-fps,
+384×256, 20-step render in approximately 45 seconds after model loading, with
+weak transformation quality. That MP4 has not been supplied here for inspection.
+The earlier missing-inference record above describes the earlier implementation.
+
+Created `experiment/wan-vace-quality` from that working branch. Added one isolated
+Wan VACE experiment with fixed source/model revisions, full-video gray control,
+white masks, a color appearance reference, no output grading, pre-download
+resource checks, a single render, diagnostics and beginning/middle/end evidence.
+The working LTX source and production configuration are unchanged. No deployment.
+
+CPU dependency/scheduler checks pass with Diffusers 0.36.0. Version 0.35.1 rejected
+the supported prompt-embedding call; updated the experiment pin after identifying
+the guard in official source. Five CPU experiment tests pass, covering real
+FFmpeg preprocessing, hardware gates, text staging and a tiny random-weight VACE
+graph (no video output or quality claim). Existing seven application tests,
+TypeScript checks and production build pass.
+
+Remaining blocker: no direct Kaggle GPU execution access. The owner will run the
+pinned single cell and supply actual output/logs. A T4 is a plausible candidate
+under the documented memory gates, not a verified fit. Do not adopt, integrate,
+deploy or increase readiness/quality scores before inspecting actual generated
+footage. Next action: review that evidence and compare with the preserved LTX MP4.
