@@ -55,5 +55,11 @@ if rc != 0:
 video = saved / "vace-output.mp4"
 if not video.is_file():
     raise RuntimeError("Process exited 0 without output MP4")
-display(Video(filename=str(video), embed=True))
+# Kaggle's IPython Video constructor can fail with filename= even though
+# the MP4 is valid. Display is optional and must never mark GPU work failed.
+try:
+    display(Video(str(video), embed=True))
+except Exception as exc:
+    print(f"MP4 is saved; inline playback unavailable: {exc}", flush=True)
+    display(FileLink(str(video)))
 display(Image(filename=str(saved / "comparison-contact-sheet.jpg")))
