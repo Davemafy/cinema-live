@@ -147,3 +147,18 @@ Evidence is committed under docs/evidence/preservation-v1. Next action: use the
 single pinned Kaggle cell to reproduce Path A and test Path B with cached Wan,
 then inspect the real candidate against the preserved baseline. Live image-AI
 serving and complete deployed journey remain unverified; no readiness-score bump.
+
+Packaging verification: source/result both played to completion in Chromium,
+5.005 seconds, 854x480, no playback/page errors. Recorded this in evidence run.json.
+Prepared and visually inspected a real 56-second H.264 evidence demo, decoded the
+entire file with FFmpeg. Captions explicitly distinguish offline appearance
+transfer from live image-AI serving. Eleven Python tests now pass, including
+pinned launcher manifest integrity and exact-baseline selection. Prepared current
+submission notes with checked Devpost rubric, public YouTube requirement and
+strict owner deadline. No submission/publication performed, no production changes.
+
+Next required external action: run the pinned preservation cell in the owner's
+existing Kaggle GPU session. It reuses /tmp Wan environment/weights, creates one
+restyled-reference render, preserves errors/evidence, and auto-selects only a
+hash-matched baseline with matching source/seed/settings. Inspect actual GPU MP4
+before integration; no improved generative result is claimed.

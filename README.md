@@ -3,11 +3,15 @@
 Record one performance. Explore a cinematic treatment from the entire recorded
 clip. Compare the source and result, and download the film.
 
-**Current status: capture/preprocessing application implemented; genuine AI
-inference is blocked by missing compute credentials and spending authorization.**
-The app explicitly disables transformation until the provider is configured.
-No AI result, motion-preservation benchmark or complete end-to-end success is
-claimed. The interface is temporary pending the separately prepared UI harvest.
+**This experiment branch includes an actual AI-image-directed, source-preserving
+MP4**, with original dimensions, timing and source detail. See
+[the experiment evidence](docs/preservation-aware-experiment.md). It is an offline
+quality experiment; live image-AI serving and complete public workflow verification
+remain pending. The existing UI and working LTX Kaggle backend are preserved.
+
+The owner reports successful LTX and original-reference Wan GPU runs. A controlled
+restyled-reference Wan candidate is ready for one cached-weight Kaggle execution;
+it has not run here and has not been adopted. No fabricated output or benchmark.
 
 Repository: https://github.com/Davemafy/cinema-live
 
