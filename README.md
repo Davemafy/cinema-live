@@ -4,7 +4,7 @@
 
 *One performance. Reimagined.*
 
-[Open CINEMA](https://madeincinema.vercel.app) · [Watch the demo film](submission/assets/cinema-final-demo.mp4) · [See the implementation](docs/subject-aware-cinematography.md)
+[Open CINEMA](https://madeincinema.vercel.app) · **[Judge's 60-second tour](JUDGES.md)** · [Actual before/after](docs/evidence/preservation-v1/comparison.jpg) · [Technical evidence](docs/subject-aware-cinematography.md)
 
 CINEMA is a browser-based filmmaking studio for exploring new visual treatments of footage you've already captured. Record or upload a performance, choose a direction, compare the original and processed films, and export an MP4.
 
