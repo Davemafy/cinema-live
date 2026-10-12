@@ -2,61 +2,117 @@
 
 **Turn a performance into a cinematic scene.**
 
-[Live studio](https://madeincinema.vercel.app) · [Demo and submission](submission/PUBLISH.md) · [Source and model credits](THIRD_PARTY.md)
+*One performance. Reimagined.*
 
-CINEMA is an experimental filmmaking workspace. Record or upload a short performance, choose a treatment, compare it with the original, and export the result as MP4. The goal is to change the visual atmosphere without sacrificing the captured movement and timing.
+[Open CINEMA](https://madeincinema.vercel.app) · [Watch the demo film](submission/assets/cinema-final-demo.mp4) · [See the implementation](docs/subject-aware-cinematography.md)
 
-## See it work
+CINEMA is a browser-based filmmaking studio for exploring new visual treatments of footage you've already captured. Record or upload a performance, choose a direction, compare the original and processed films, and export an MP4.
 
-The studio supports camera capture, video uploads (MP4, WebM, MOV), a licensed sample, video preprocessing, asynchronous render jobs, side-by-side playback, and download. Source footage is retained for comparison.
+The performance is the starting point—not a disposable prompt. Instead of asking a video model to invent the entire shot again, CINEMA experiments with using AI to direct the look while keeping the original people, movement, framing, and timing.
 
-**Directed light** is the source-preserving experimental pipeline. It creates an IC-Light reference from the supplied video, segments people, follows movement using OpenCV optical flow, and composites treated foreground/background lighting over the original frames. Lighting and moving-subject boundaries are not yet consistently realistic.
+![Original performance and AI-directed appearance transfer (offline B experiment)](docs/evidence/preservation-v1/comparison.jpg)
 
-**Silver screen** is an experimental black-and-white LTX video-to-video path. Unlike Directed light, it may regenerate parts of the performance; identity and movement preservation are not guaranteed.
+*An actual five-second, source-preserving appearance-transfer experiment. This is the offline B showcase, not an output generated on demand by the live Directed light worker.*
 
-The public site uses a **temporary Kaggle GPU worker** when available. A real Directed light job completed through the deployed app using its built-in sample, but notebook availability is not guaranteed. If the worker is offline, the app reports the unavailable treatment instead of displaying a fake render.
+## The working studio
 
-## Results and evidence
+1. **Capture or upload** a five-second take, or use the licensed sample performance.
+2. **Choose a treatment.** Directed light is the source-preserving IC-Light experiment; Silver screen is an alternative LTX video-generation experiment.
+3. **Process a real video** using a separate inference worker. The interface reports actual queued, rendering, completed, and failed states.
+4. **Compare and export.** Play the original against the result and download the processed MP4.
 
-- [Appearance-transfer film (B)](docs/evidence/subject-aware-v1/baseline-appearance-transfer.mp4) — the stronger-looking **offline** visual showcase, not a live Directed light result.
-- [Subject-aware film (C)](docs/evidence/subject-aware-v1/subject-aware.mp4) — actual experimental IC-Light and moving-subject pipeline; some mask artifacts remain.
-- [A / B / C comparison](docs/evidence/subject-aware-v1/comparison-abc.mp4) — same source, different treatment methods.
-- [Technical method, measured tests, and limitations](docs/subject-aware-cinematography.md) — reproducible evidence, including a separate local source-upload test.
+The application includes browser camera capture, FFmpeg normalization, preserved source footage, asynchronous jobs, playback, export, and browser-side session recovery. When the temporary worker is offline, CINEMA reports the limitation; it does not substitute a prerecorded result for a new upload.
 
-The primary source performance is a licensed Charleston dance excerpt from ARTSEDGE / The Kennedy Center (CC BY 3.0). See [attribution](submission/ATTRIBUTIONS.md).
+## Real AI processing on a Kaggle GPU
+
+CINEMA's **Directed light** pipeline has been connected to a temporary **Kaggle GPU notebook** through a FastAPI worker and an HTTPS Cloudflare tunnel. The deployed Vercel application submitted the built-in performance and received an actual processed video from that GPU-backed path.
+
+The pipeline performs these steps:
+
+- **Source-conditioned reference:** IC-Light generates a lighting reference using the submitted performance, rather than an unrelated stock image.
+- **People segmentation:** a pretrained LRASPP-MobileNetV3 model estimates moving foreground masks.
+- **Motion analysis:** OpenCV optical flow tracks changes between source frames.
+- **Source-preserving compositing:** separate foreground and background treatments alter the atmosphere while retaining source-frame faces and movement.
+- **Video delivery:** FFmpeg encodes the MP4; the worker exposes authenticated submission/status requests and time-limited signed output links.
+
+Each job has a separate identifier and input. The result metadata is checked against the submitted source hash. We also processed a **different uploaded video** through the real local IC-Light worker and verified playback and MP4 export.
+
+**What the GPU result proves:** the deployed app, private worker connection, actual AI inference, job polling, and result playback can operate together.
+
+**What it does not prove:** always-on hosting, consistently realistic lighting, or a production-level GPU throughput benchmark. Kaggle sessions and Quick Tunnel URLs can expire. The Directed light result is still visibly experimental, especially around subject edges.
+
+## Results
+
+| Experiment | Evidence | Status |
+| --- | --- | --- |
+| **B — Appearance transfer** | [Finished film](docs/evidence/subject-aware-v1/baseline-appearance-transfer.mp4) | Strongest visual showcase; AI-directed, motion-aware treatment produced **offline** |
+| **C — Directed light** | [Finished film](docs/evidence/subject-aware-v1/subject-aware.mp4) | Real source-conditioned IC-Light processing; live built-in-sample GPU demonstration, with imperfect mattes |
+| **A / B / C** | [Side-by-side comparison](docs/evidence/subject-aware-v1/comparison-abc.mp4) | Same performance, directly inspectable methods |
+
+The offline appearance-transfer film contains **120 frames at 854 × 480**, with the source movement and timing preserved. The separate **fresh-upload local test** processed 48 frames with a new AI reference and verified an export. These measurements describe different experiments; they are not interchangeable GPU performance claims.
+
+[Full technical report, model revisions, actual media and limitations →](docs/subject-aware-cinematography.md)
+
+## Architecture
+
+```text
+Browser capture / upload
+        |
+        v
+Next.js API + FFmpeg normalization
+        |
+        v
+Signed render job ----------------------+
+        |                               |
+        v                               v
+FastAPI GPU worker               Browser job polling
+        |
+        v
+IC-Light reference + people masks + optical flow
+        |
+        v
+Source-frame compositing + FFmpeg output
+        |
+        v
+Original / treatment comparison -> MP4 export
+```
+
+The frontend is deployed on **Vercel**; model inference runs on a **separate GPU worker**, not inside a Vercel function. The connection uses server-only `CINEMA_BACKEND_URL` and `CINEMA_BACKEND_TOKEN`. Workers can be moved between hosts that implement the same FastAPI contract; in-progress jobs and files do not automatically migrate.
 
 ## Run locally
 
 Requires Node.js 22+.
 
-```sh
+```bash
 npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-Open http://localhost:3000. Camera capture requires localhost or HTTPS. The studio can preview and normalize footage without a GPU; actual AI rendering requires a working backend.
+Open [localhost:3000](http://localhost:3000). The capture, sample, preview, and video-preparation flow works without inference credentials; actual rendering requires a reachable worker.
 
-```sh
+To connect the subject-aware worker, set these **private server-side** variables:
+
+```dotenv
+CINEMA_BACKEND_URL=https://your-worker.example
+CINEMA_BACKEND_TOKEN=your-private-worker-token
+JOB_SIGNING_SECRET=your-independent-random-signing-secret
+```
+
+Never commit credentials or prefix them with `NEXT_PUBLIC_`. See [Kaggle setup](docs/DEMO-KAGGLE.md) and [backend contract/security](docs/backend-connection.md).
+
+```bash
 npm run typecheck
 npm test
 npm run build
 ```
 
-For a temporary FastAPI worker, configure these **server-only** environment variables:
+## Built with
 
-```dotenv
-CINEMA_BACKEND_URL=https://your-worker.example
-CINEMA_BACKEND_TOKEN=your-private-bearer-token
-JOB_SIGNING_SECRET=your-independent-random-signing-secret
-```
+Next.js · React · TypeScript · FastAPI · Python · IC-Light · torchvision · OpenCV · FFmpeg · Kaggle GPU · Cloudflare Tunnel · Vercel.
 
-Never commit real values or expose them through `NEXT_PUBLIC_`. The worker must support `/health`, `/v1/jobs`, job status, and signed MP4 URLs. Read [backend integration](docs/backend-connection.md) and [temporary Kaggle setup](docs/DEMO-KAGGLE.md). Old jobs are not migrated when a notebook restarts or its tunnel URL changes.
+We tested LTX and Wan VACE during development, but built our source-preserving approach because generated footage did not consistently maintain the original performance. CINEMA integrates existing pretrained models; it does not claim to have trained them.
 
-## Stack
+**Credits and licensing:** the example performance is a licensed ARTSEDGE / Kennedy Center Charleston dance excerpt (CC BY 3.0). Application code is MIT-licensed; model weights, codecs and footage have separate terms. See [third-party attribution](THIRD_PARTY.md) and [media/model provenance](submission/ATTRIBUTIONS.md).
 
-Next.js, React, TypeScript, FastAPI, Python, OpenCV, IC-Light, torchvision segmentation, FFmpeg, and Vercel. LTX and Wan VACE were evaluated during development; CINEMA did not train those models.
-
-The app and orchestration code are MIT-licensed. **Model checkpoints, binary codecs, and sample media have their own terms.** See [THIRD_PARTY.md](THIRD_PARTY.md) and [submission/ATTRIBUTIONS.md](submission/ATTRIBUTIONS.md).
-
-Built for Banana Hacks 2026.
+*Built for Banana Hacks 2026.*
