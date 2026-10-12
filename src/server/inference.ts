@@ -1,5 +1,6 @@
 import { KAGGLE_MODEL, kaggleSelected, kaggleReady, submitKaggle, getKaggleJob } from './kaggle';
 import { CINEMATOGRAPHY_MODEL, cinematographyReady, submitCinematography, getCinematographyJob } from './cinematography';
+import { backendSelected, backendConnection, backendCall, configuredWorkerOrigins } from './backend';
 import { fal } from '@fal-ai/client';
 import { randomInt } from 'node:crypto';
 import { MODEL, TREATMENTS, type Job, type TreatmentId } from '@/lib/contracts';
@@ -12,16 +13,32 @@ export function readiness() {
   const providerReady = isKaggle ? kaggleReady() : Boolean(process.env.FAL_KEY);
   const secretConfigured = Boolean(process.env.JOB_SIGNING_SECRET && process.env.JOB_SIGNING_SECRET.length >= 32);
   const reason = !providerReady
-    ? (isKaggle ? 'Set CINEMA_KAGGLE_URL to the private token@tunnel URL.' : 'The inference provider is not connected yet.')
-    : !secretConfigured && !isKaggle ? 'Job security is not configured.'
+    ? (isKaggle ? 'Configure a valid backend URL and private bearer token.' : 'The inference provider is not connected yet.')
+    : !secretConfigured ? 'Job security is not configured.'
     : process.env.INFERENCE_ENABLED !== 'true' && !isKaggle
       ? 'AI rendering is disabled until a compute budget is authorized.' : undefined;
-  // Kaggle is a free, temporary demo worker. A configured URL alone enables
-  // inference; no paid provider flag or separate signing secret is needed.
-  const subjectReady = cinematographyReady() && (secretConfigured || kaggleReady());
+  // Worker connections require an independent, stable application signing secret.
+  const subjectReady = cinematographyReady() && secretConfigured;
   return { inferenceAvailable: !reason, model: isKaggle ? KAGGLE_MODEL : MODEL, reason, renderCodeRequired: Boolean(process.env.CINEMA_RENDER_CODE),
     treatments: { noir: { available: !reason, reason }, 'subject-aware': { available: subjectReady,
       reason: subjectReady ? undefined : 'The subject-aware engine is not connected and secured. LTX cannot substitute for this treatment.' } } };
+}
+export async function connectedReadiness() {
+  const base = readiness();
+  if (!backendSelected()) return base;
+  const unavailable = (reason: string) => ({ ...base, inferenceAvailable: false, reason,
+    treatments: { noir: { available: false, reason }, 'subject-aware': { available: false, reason } } });
+  if (!process.env.JOB_SIGNING_SECRET || process.env.JOB_SIGNING_SECRET.length < 32) return unavailable('Job security is not configured. Keep the independent JOB_SIGNING_SECRET.');
+  try {
+    const health = await backendCall(backendConnection(), '/health', {}, 5000);
+    if (health.ok !== true) return unavailable('The inference worker is not ready.');
+    const ltx = health.model === KAGGLE_MODEL;
+    const subject = health.model === CINEMATOGRAPHY_MODEL && health.mode === 'subject-aware' && health.ltxFallback === false;
+    if (!ltx && !subject) return unavailable('This worker does not expose a supported CINEMA rendering engine.');
+    return { ...base, model: health.model, inferenceAvailable: true, reason: undefined,
+      treatments: { noir: { available: ltx, reason: ltx ? undefined : 'This worker serves Directed light, not LTX.' },
+        'subject-aware': { available: subject, reason: subject ? undefined : 'This worker serves LTX, not source-preserving Directed light.' } } };
+  } catch (e) { return unavailable(e instanceof Error ? e.message : 'The inference worker is unavailable.'); }
 }
 export function requireInference(request?: Request, treatmentId?: string) {
   const health = readiness();
@@ -34,7 +51,7 @@ export function requireInference(request?: Request, treatmentId?: string) {
   if (treatmentId !== 'subject-aware' && !kaggleSelected()) fal.config({ credentials: process.env.FAL_KEY, retry: { maxRetries: 0 } });
 }
 type JobClaims = Job & { kind: 'job'; expires: number };
-type ExportClaims = { kind: 'export'; url: string; id: string; expires: number };
+type ExportClaims = { kind: 'export'; url: string; id: string; expires: number; backendOrigin?: string };
 export async function submitVideo(video: NormalizedVideo, treatmentId: string): Promise<Job> {
   const treatment = TREATMENTS.find(t => t.id === treatmentId);
   if (!treatment) throw new AppError(400, 'Choose a supported cinematic treatment.');
@@ -95,5 +112,6 @@ export async function getJob(token: string): Promise<Job> {
 export function exportMedia(token: string) {
   const claims = verify<ExportClaims>(token);
   if (claims.kind !== 'export' || !claims.id) throw new AppError(400, 'Invalid export link.');
-  return { url: trustedMediaUrl(claims.url), filename: `cinema-${claims.id.replace(/[^a-zA-Z0-9-]/g, '')}.mp4` };
+  if (claims.backendOrigin && !configuredWorkerOrigins().includes(claims.backendOrigin)) throw new AppError(410, 'This export belongs to the previous worker. Provider changes do not migrate files.');
+  return { url: trustedMediaUrl(claims.url, claims.backendOrigin, claims.backendOrigin ? claims.id : undefined), filename: `cinema-${claims.id.replace(/[^a-zA-Z0-9-]/g, '')}.mp4` };
 }

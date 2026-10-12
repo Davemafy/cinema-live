@@ -1,3 +1,3 @@
-import { readiness } from '@/server/inference';
+import { connectedReadiness } from '@/server/inference';
 export const dynamic = 'force-dynamic';
-export function GET() { return Response.json(readiness(), { headers: { 'Cache-Control': 'no-store' } }); }
+export async function GET() { return Response.json(await connectedReadiness(), { headers: { 'Cache-Control': 'no-store' } }); }

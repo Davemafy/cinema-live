@@ -1,3 +1,4 @@
+import { createHmac } from 'node:crypto';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
@@ -31,7 +32,9 @@ test('subject-aware worker rejects credential-bearing media and mismatched signe
   try {
     process.env.CINEMA_CINEMATOGRAPHY_URL = 'https://unit-test-secret-with-at-least-32-characters@subject-test.trycloudflare.com';
     assert.equal(cinematographyConnection().origin, 'https://subject-test.trycloudflare.com');
-    const path = '/v1/jobs/' + 'a'.repeat(24) + '/video?e=1791760000&s=' + 'b'.repeat(64);
+    const expires = Math.floor(Date.now()/1000)+3600;
+    const signature=createHmac('sha256','unit-test-secret-with-at-least-32-characters').update('a'.repeat(24)+':'+expires).digest('hex');
+    const path = '/v1/jobs/' + 'a'.repeat(24) + '/video?e='+expires+'&s='+signature;
     assert.equal(trustedMediaUrl('https://subject-test.trycloudflare.com' + path), 'https://subject-test.trycloudflare.com' + path);
     assert.throws(() => trustedMediaUrl('https://user:secret@subject-test.trycloudflare.com' + path));
     assert.throws(() => trustedMediaUrl('https://subject-test.trycloudflare.com/other.mp4'));

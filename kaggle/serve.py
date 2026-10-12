@@ -6,10 +6,10 @@ from fastapi import FastAPI, File, Form, Header, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from PIL import Image, ImageOps
 
-ROOT = Path("/kaggle/working/cinema-worker")
+ROOT = Path(os.environ.get("CINEMA_WORKDIR", "/kaggle/working/cinema-worker"))
 ROOT.mkdir(parents=True, exist_ok=True)
-TOKEN = os.environ.get("CINEMA_KAGGLE_TOKEN") or secrets.token_urlsafe(32)
-URL = ""
+TOKEN = os.environ.get("CINEMA_BACKEND_TOKEN") or os.environ.get("CINEMA_KAGGLE_TOKEN") or secrets.token_urlsafe(32)
+URL = os.environ.get("CINEMA_BACKEND_URL", "").rstrip("/")
 PORT = 8000
 MODEL_STATE = "starting"
 PIPE = None
@@ -291,20 +291,33 @@ def smoke_test():
 
 def main():
     import requests, uvicorn, socket
-    global PORT
+    global PORT, URL
     with socket.socket() as listener:
         listener.bind(("127.0.0.1", 0))
         PORT = listener.getsockname()[1]
+    if os.environ.get("CINEMA_PORT"): PORT = int(os.environ["CINEMA_PORT"])
     preflight()
     say(f"STARTING CINEMA TEMPORARY KAGGLE API on local port {PORT}")
     threading.Thread(target=generate, daemon=True).start()
-    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=PORT, log_level="warning"))
+    server = uvicorn.Server(uvicorn.Config(app, host=os.environ.get("CINEMA_BIND_HOST", "127.0.0.1"), port=PORT, log_level="warning"))
     threading.Thread(target=server.run, daemon=True).start()
     for _ in range(30):
         try:
             if requests.get(f"http://127.0.0.1:{PORT}/health", timeout=1).ok: break
         except Exception: time.sleep(1)
     else: raise RuntimeError("FastAPI failed to start")
+
+    if URL:
+        from urllib.parse import urlparse
+        parsed=urlparse(URL)
+        if parsed.scheme!="https" or not parsed.hostname or parsed.username or parsed.password or parsed.path not in ("","/") or parsed.query or parsed.fragment:
+            raise RuntimeError("CINEMA_BACKEND_URL must be the externally routed HTTPS origin")
+        if len(TOKEN)<32:raise RuntimeError("Configure a private CINEMA_BACKEND_TOKEN of at least 32 characters")
+        say("USING CONFIGURED HTTPS ORIGIN; no tunnel provisioning")
+        threading.Thread(target=warm,daemon=True).start()
+        if "--selftest" in sys.argv:threading.Thread(target=smoke_test,daemon=True).start()
+        while server.started:time.sleep(1)
+        raise RuntimeError("FastAPI server stopped")
 
     binary = ROOT / "cloudflared"
     if not binary.exists():
@@ -320,13 +333,12 @@ def main():
         [str(binary), "tunnel", "--no-autoupdate", "--protocol", "http2", "--url", f"http://127.0.0.1:{PORT}"],
         stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
     )
-    global URL
     for line in tunnel.stdout:
         match = re.search(r"https://[a-z0-9-]+\.trycloudflare\.com", line)
         if match and not URL:
             URL = match.group(0)
             say("PUBLIC URL: " + URL)
-            say("API TOKEN (SECRET - configure CINEMA_KAGGLE_TOKEN in Vercel): " + TOKEN)
+            say("Configure the worker token privately in CINEMA_BACKEND_TOKEN. Token is not logged.")
             say("HEALTH: " + URL + "/health")
             say("IMPORTANT: EXPERIMENTAL VIDEO-TO-VIDEO CONDITIONING; MOTION FIDELITY IS NOT GUARANTEED")
             threading.Thread(target=warm, daemon=True).start()

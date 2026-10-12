@@ -284,3 +284,48 @@ P0 final film re-encoded after removing the recorded mobile viewport transition
 from the desktop sequence. 82.0 s, SHA256 fd5bd3d8...64075; all frames decoded.
 Reviewed opener, AI reference, A/B/C segment, app playback/export and closing.
 No experimental C quality improvement claimed. Final assets preserve B as primary.
+
+Two-variable real HTTPS verification completed: new uploaded take submitted using
+CINEMA_BACKEND_URL + CINEMA_BACKEND_TOKEN, independent existing JOB_SIGNING_SECRET,
+actual per-input IC-Light reference, native source processing, signed-media/HMAC
+validation, source/result playback and matching exported bytes. Local CPU only:
+284.128 s, 3.776 GiB RAM, 48 frames at 854x480/24000:1001. Scoped development
+certificate trust only, no general TLS bypass. Recorded proof under
+`docs/evidence/backend-v1`. 18 Python checks passed. Full build result follows.
+
+P0 film fully browser-played: 82 s, ended=true, no media error. Its display width
+is 1281 due to inherited source sample-aspect ratio; encoded dimensions are 1280x720.
+No new inference is implied in the final screen recording; B remains primary.
+
+
+Full production build passes with type checking. 22 application/protocol checks
+and all 18 Python checks pass. Model-serving implementation stays process-isolated;
+no provider-specific frontend code changes or backend-token-derived app key.
+
+P3 bounded test: background exposure .14 -> .28 only, using the genuine cached
+same-input IC-Light reference; no new model/reference generation. Actual120-frame
+comparison re-rendered in142.356 s,1.422 GiB RAM, outputdfe508...ef5. Reviewed
+beginning/middle/end and all120frames. Edge contrast is lower, but matte artifacts
+remain; no clear superiority over B. Not adopted; renderer defaults unchanged.
+Evidence: docs/evidence/gentler-candidate. Stop visual experiments for submission.
+
+P0 assets already published at ee62831060029afb5ffac52ae853293e0b16190e, including
+82-second actual film, primary B and comparison, real screenshots, finished copy
+and exact authenticated publishing steps. Owner was given those links immediately.
+Only authenticated YouTube/Devpost, team/eligibility fields and public GPU hosting
+remain external actions. No costs, production promotion or submission performed.
+
+
+Final follow-up: 23 app/protocol tests, typecheck and production build pass after
+terminal-job handling. HTTP410 (lost worker/expired capability) becomes a failed
+job in the client, so capture/retry are not permanently locked. This is explicit
+failure handling, not automatic job migration/recovery. LTX metadata now reflects
+its actual existing strength .65 and denoise_strength1.0; model controls unchanged.
+The gentler candidate's full comparison also browser-played to completion,5.005s,
+1920x400, no media error. Ready for final publish; no further optional work.
+
+
+Final public health check: the prior cinema-live-six.vercel.app address redirects
+to madeincinema.vercel.app, whose /api/health returns200. Updated submission links
+to the current canonical URL. This check proves public HTTP availability, not a
+new genuine GPU render. Production deployment/settings were not modified here.

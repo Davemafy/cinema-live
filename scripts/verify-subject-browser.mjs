@@ -3,7 +3,7 @@ import { mkdir,writeFile,readFile,readdir } from 'node:fs/promises';
 const base=process.env.BASE_URL||'http://localhost:3002';
 const root=process.env.ARTIFACT_DIR||'artifacts/subject-aware/browser';
 await mkdir(root,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox']});
+const browser=await chromium.launch({headless:true,executablePath:'/usr/bin/chromium',args:['--no-sandbox', ...(process.env.CINEMA_TEST_CERT_SPKI ? ['--ignore-certificate-errors-spki-list='+process.env.CINEMA_TEST_CERT_SPKI] : [])]});
 const page=await browser.newPage({viewport:{width:1440,height:1000},acceptDownloads:true});
 try {
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
@@ -53,7 +53,7 @@ const report=await videos.evaluateAll(videos=>videos.map(v=>({duration:v.duratio
 await page.setViewportSize({width:390,height:844});
 await page.screenshot({path:root+'/result-mobile.png',fullPage:true});
 const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
-await writeFile(root+'/verification.json',JSON.stringify({actualInput:'alternate-take.mp4 (different first frame)',playback:report,mobileOverflow:overflow,pageErrors:errors},null,2));
+await writeFile(root+'/verification.json',JSON.stringify({actualInput:'alternate-take.mp4 (different first frame)',connection:process.env.CINEMA_TEST_CERT_SPKI?'Two-variable local HTTPS worker; narrowly trusted generated test certificate':'Configured worker',playback:report,mobileOverflow:overflow,pageErrors:errors},null,2));
 console.log(JSON.stringify({playback:report,mobileOverflow:overflow,pageErrors:errors},null,2));
 const comparisonPage=await browser.newPage({viewport:{width:1920,height:430}});
 const comparisonBytes=await readFile('artifacts/subject-aware/candidate-v3/comparison-abc.mp4');

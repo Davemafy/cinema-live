@@ -1,4 +1,5 @@
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
+import { createHmac, timingSafeEqual } from 'node:crypto';
+import { configuredWorkerConnections, backendSelected } from './backend';
 import { AppError } from './errors';
 
 const buckets = new Map<string, { count: number; until: number }>();
@@ -27,19 +28,6 @@ function key() {
   const configured = process.env.JOB_SIGNING_SECRET;
   if (configured && configured.length >= 32) return configured;
 
-  // Ephemeral Kaggle demo only: the same secret inside the private URL
-  // can back job signing without asking for another env variable.
-  // This is never shipped to clients. Existing configured keys take priority.
-  const raw = process.env.CINEMA_KAGGLE_URL;
-  if (raw) {
-    try {
-      const url = new URL(raw);
-      const token = process.env.CINEMA_KAGGLE_TOKEN?.trim() || decodeURIComponent(url.username);
-      if (url.protocol === 'https:' && token.length >= 32 && url.hostname.endsWith('.trycloudflare.com')) {
-        return createHash('sha256').update('cinema-kaggle-job-signing:' + token).digest('hex');
-      }
-    } catch { /* invalid demo URL */ }
-  }
   throw new AppError(503, 'Job security is not configured on this deployment.');
 }
 
@@ -60,25 +48,30 @@ export function verify<T extends { expires: number }>(token: string): T {
   if (!Number.isFinite(data.expires) || data.expires < Date.now()) throw new AppError(410, 'This job link expired after 24 hours. Record or upload a new take.');
   return data;
 }
-export function trustedMediaUrl(value: string) {
-  const u = new URL(value);
-  const falAllowed = u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media');
-  let kaggleAllowed = false;
-  try {
-    for (const configured of [process.env.CINEMA_KAGGLE_URL, process.env.CINEMA_CINEMATOGRAPHY_URL]) {
-    if (configured) {
-      const backend = new URL(configured);
-      kaggleAllowed ||=
-        u.origin === backend.origin &&
-        /^\/v1\/jobs\/[0-9a-f]{24}\/video$/.test(u.pathname) &&
-        /^\d{9,12}$/.test(u.searchParams.get('e') || '') &&
-        /^[0-9a-f]{64}$/.test(u.searchParams.get('s') || '');
-    }
-    }
-  } catch { /* Invalid configuration must never open another host. */ }
+export function trustedMediaUrl(value: string, expectedOrigin?: string, expectedId?: string) {
+  let u: URL;
+  try { u = new URL(value); } catch { throw new AppError(502, 'The inference provider returned an invalid media address.'); }
+  const workerOrigin = expectedOrigin || configuredWorkerConnections().find(c => c.origin === u.origin)?.origin;
+  const match = u.pathname.match(/^\/v1\/jobs\/([0-9a-f]{24})\/video$/);
+  const expires = u.searchParams.get('e') || '';
+  const workerAllowed = Boolean(workerOrigin && u.origin === workerOrigin && match
+    && (!expectedId || match[1] === expectedId) && /^\d{9,12}$/.test(expires)
+    && /^[0-9a-f]{64}$/.test(u.searchParams.get('s') || '')
+    && [...u.searchParams.keys()].length === 2 && u.searchParams.getAll('e').length === 1
+    && u.searchParams.getAll('s').length === 1);
+  if (workerAllowed) {
+    const connection = configuredWorkerConnections().find(c => c.origin === workerOrigin);
+    const now = Math.floor(Date.now() / 1000);
+    if (!connection || Number(expires) <= now || Number(expires) > now + 14460) throw new AppError(502, 'The worker media link is expired or invalid.');
+    const expected = createHmac('sha256', connection.token).update(`${match![1]}:${expires}`).digest();
+    const supplied = Buffer.from(u.searchParams.get('s')!, 'hex');
+    if (supplied.length !== expected.length || !timingSafeEqual(expected, supplied)) throw new AppError(502, 'The worker media signature is invalid.');
+  }
+  const falAllowed = !expectedOrigin && !backendSelected() && (u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media'));
   const local = process.env.NODE_ENV !== 'production' && process.env.CINEMA_ALLOW_LOCAL_ENGINE === 'true'
-    && ['127.0.0.1', 'localhost'].includes(u.hostname) && u.protocol === 'http:' && kaggleAllowed;
-  if ((!local && (u.protocol !== 'https:' || u.port)) || u.username || u.password || !(falAllowed || kaggleAllowed)) {
+    && ['127.0.0.1', 'localhost'].includes(u.hostname) && u.protocol === 'http:' && workerAllowed;
+  if ((!local && u.protocol !== 'https:') || u.username || u.password || u.hash
+      || !(falAllowed || workerAllowed) || (falAllowed && u.port)) {
     throw new AppError(502, 'The inference provider returned an unsupported media address.');
   }
   return u.href;

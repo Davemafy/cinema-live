@@ -19,9 +19,9 @@ from fastapi.responses import FileResponse
 ENGINE=Path(__file__).resolve().parent/"experiments/subject_cinematography.py"
 
 ROOT=Path(os.environ.get("CINEMA_SUBJECT_WORKDIR","/tmp/cinema-subject-jobs"));ROOT.mkdir(parents=True,exist_ok=True)
-TOKEN=os.environ.get("CINEMA_SUBJECT_TOKEN","")
+TOKEN=os.environ.get("CINEMA_BACKEND_TOKEN") or os.environ.get("CINEMA_SUBJECT_TOKEN","")
 if len(TOKEN)<32:raise RuntimeError("Configure CINEMA_SUBJECT_TOKEN privately before starting the worker")
-ORIGIN=os.environ.get("CINEMA_SUBJECT_ORIGIN","").rstrip("/")
+ORIGIN=(os.environ.get("CINEMA_BACKEND_URL") or os.environ.get("CINEMA_SUBJECT_ORIGIN","")).rstrip("/")
 CACHE=os.environ.get("CINEMA_SUBJECT_CACHE","/tmp/cinema-subject-models")
 jobs={};lock=threading.Lock();work=queue.Queue(maxsize=2)
 app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
@@ -114,4 +114,4 @@ def generate():
 if __name__=="__main__":
     import uvicorn
     threading.Thread(target=generate,daemon=True).start()
-    uvicorn.run(app,host="127.0.0.1",port=int(os.environ.get("CINEMA_SUBJECT_PORT","8892")),log_level="warning")
+    uvicorn.run(app,host=os.environ.get("CINEMA_BIND_HOST","127.0.0.1"),port=int(os.environ.get("CINEMA_SUBJECT_PORT","8892")),log_level="warning")

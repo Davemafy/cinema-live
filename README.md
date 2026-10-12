@@ -3,6 +3,19 @@
 Record one performance. Explore a cinematic treatment from the entire recorded
 clip. Compare the source and result, and download the film.
 
+**Final submission package:** [82-second actual demo](submission/assets/cinema-final-demo.mp4),
+[primary B film](submission/assets/cinema-showcase-b.mp4), [comparison](submission/assets/comparison-a-b.mp4),
+[final Devpost copy](submission/DEVPOST.md) and [exact publishing steps](submission/PUBLISH.md).
+The public studio exists; this branch was not promoted to production. Devpost is
+**not submitted**. B remains the visual showcase; C remains technical evidence.
+
+**Provider-independent backend:** configure only `CINEMA_BACKEND_URL` and
+`CINEMA_BACKEND_TOKEN` for the worker connection; keep the independent
+`JOB_SIGNING_SECRET` unchanged. [Contract, setup, migration and limitations](docs/backend-connection.md).
+Both engine contracts passed mocked switching checks across three HTTPS hosts.
+A real local HTTPS upload/reference/process/playback/export run also passed.
+Public GPU availability and durable unattended serving remain unverified.
+
 **Subject-aware successor experiment:** actual CPU IC-Light inference, automatic
 moving-person segmentation and independent foreground/background lighting now
 work through the local app. [Real A/B/C media, measured results and limitations](docs/subject-aware-cinematography.md).

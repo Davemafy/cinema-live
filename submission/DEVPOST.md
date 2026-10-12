@@ -110,7 +110,7 @@ Next.js, React, TypeScript, MediaRecorder, IndexedDB, Python, NumPy, OpenCV, FFm
 FFprobe, FastAPI, IC-Light, Stable Diffusion 1.5, torchvision, LTX, Vercel, Kaggle.
 
 ## Links for the form
-- Project: https://cinema-live-six.vercel.app
+- Project: https://madeincinema.vercel.app
 - Public repository: https://github.com/Davemafy/cinema-live
 - Submission branch: https://github.com/Davemafy/cinema-live/tree/experiment/subject-aware-cinematography
 - Primary actual film: docs/evidence/subject-aware-v1/baseline-appearance-transfer.mp4

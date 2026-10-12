@@ -1,10 +1,13 @@
 import type { Health, Job } from './contracts';
 import { MAX_UPLOAD_BYTES } from './contracts';
 import type { Take } from './storage';
+export class ApiError extends Error {
+  constructor(public status: number, message: string) { super(message); }
+}
 async function check(response: Response) {
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(body?.error || `Request failed (${response.status}). Please retry.`);
+    throw new ApiError(response.status, body?.error || `Request failed (${response.status}). Please retry.`);
   }
   return response;
 }

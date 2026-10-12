@@ -1,0 +1,22 @@
+{
+  "actualInput": "alternate-take.mp4 (different first frame)",
+  "connection": "Two-variable local HTTPS worker; narrowly trusted generated test certificate",
+  "playback": [
+    {
+      "duration": 2.002,
+      "width": 854,
+      "height": 480,
+      "ended": true,
+      "error": null
+    },
+    {
+      "duration": 2.002,
+      "width": 854,
+      "height": 480,
+      "ended": true,
+      "error": null
+    }
+  ],
+  "mobileOverflow": false,
+  "pageErrors": []
+}

@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { createJob, health, jobStatus, prepareVideo } from '@/lib/api';
+import { ApiError, createJob, health, jobStatus, prepareVideo } from '@/lib/api';
 import { loadSession, saveSession, type Take } from '@/lib/storage';
 import type { Health, Job } from '@/lib/contracts';
 
@@ -50,6 +50,13 @@ export function useCinema() {
         if (next.state === 'succeeded' || next.state === 'failed') return;
       } catch (e) {
         if (disposed) return;
+        if (e instanceof ApiError && e.status === 410) {
+          // Lost/expired jobs are terminal. Do not leave capture controls locked
+          // or pretend a provider switch restored worker-local state.
+          setJob(current => current ? { ...current, state: 'failed', error: e.message } : current);
+          setPollError('');
+          return;
+        }
         failures++;
         setPollError(e instanceof Error ? e.message : 'Status is temporarily unavailable.');
         if (failures >= 3) return;

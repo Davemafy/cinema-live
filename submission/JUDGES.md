@@ -1,6 +1,6 @@
 # CINEMA — judging instructions and verified evidence
 
-Public site (unchanged production deployment): https://cinema-live-six.vercel.app
+Public site (unchanged production deployment): https://madeincinema.vercel.app
 
 Experiment implementation: https://github.com/Davemafy/cinema-live/tree/experiment/preservation-aware-treatment
 
@@ -44,3 +44,25 @@ activation is blocked by missing reachable worker hosting. Production and workin
 LTX remain unchanged. Matte artifacts prevent claiming overall visual improvement
 over the previous result; this remains an experiment, not the submission's quality
 winner. Keep the verified offline demo clearly labeled. No submission occurred.
+
+
+## Final delivery package
+
+Use `submission/assets/cinema-final-demo.mp4` (82 s), with the core promise and
+actual original/B comparison in its first 14 seconds. B is the primary visual
+showcase, explicitly offline. Actual app footage reopens a genuinely completed
+local job and is explicitly not live generation. Final screenshots, provenance,
+full-film browser playback proof, credits and copy are included under submission.
+Use `submission/DEVPOST.md` and `submission/PUBLISH.md` for publication.
+
+Provider-independent connection code and tests are on the same subject-aware
+branch. Configure CINEMA_BACKEND_URL + CINEMA_BACKEND_TOKEN; keep JOB_SIGNING_SECRET
+unchanged. Both engines were tested with mocked HTTPS provider addresses; a real
+local HTTPS source-aware job also completed (284.128 s CPU), compared and exported.
+Public GPU activation is not verified and production was not changed. Jobs/media
+remain worker-local and do not migrate with a URL change. No Devpost submission
+or public YouTube publication occurred here.
+
+A bounded lower-contrast C candidate was actually re-rendered using the same-input
+AI reference. It did not clearly beat B and was rejected as the showcase; its
+comparison remains technical evidence in docs/evidence/gentler-candidate.

@@ -1,3 +1,4 @@
+import { backendSelected, backendConnection, backendCall, assertJobOrigin, validatedOrigin } from './backend';
 import { AppError } from './errors';
 import { sign, trustedMediaUrl } from './security';
 import type { Job, TreatmentId } from '@/lib/contracts';
@@ -6,33 +7,27 @@ import { createHash } from 'node:crypto';
 
 export const CINEMATOGRAPHY_MODEL = 'cinema/ic-light-person-aware-v1';
 export function cinematographyConnection() {
+  if (backendSelected()) return backendConnection();
   const raw = process.env.CINEMA_CINEMATOGRAPHY_URL;
   if (!raw) throw new AppError(503, 'The subject-aware engine is not connected. This treatment cannot use the LTX fallback.');
   let url: URL;
   try { url = new URL(raw); } catch { throw new AppError(503, 'Subject-aware engine URL is invalid.'); }
   const token = decodeURIComponent(url.username);
-  const local = process.env.NODE_ENV !== 'production' && process.env.CINEMA_ALLOW_LOCAL_ENGINE === 'true'
-    && ['127.0.0.1', 'localhost'].includes(url.hostname) && url.protocol === 'http:';
-  if ((!local && (url.protocol !== 'https:' || url.port)) || url.password || token.length < 32
-      || url.pathname !== '/' || url.search || url.hash) throw new AppError(503, 'Use a private HTTPS token@worker-origin URL for the subject-aware engine.');
+  if (url.password || token.length < 32) throw new AppError(503, 'Invalid legacy subject-aware connection.');
+  url.username = '';
+  validatedOrigin(url.href, true);
   return { origin: url.origin, token };
 }
 export function cinematographyReady() {
   try { cinematographyConnection(); return true; } catch { return false; }
 }
 async function call(path: string, init: RequestInit = {}) {
-  const { origin, token } = cinematographyConnection();
-  let response: Response;
-  try {
-    response = await fetch(origin + path, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` },
-      cache: 'no-store', signal: AbortSignal.timeout(30_000) });
-  } catch { throw new AppError(503, 'The subject-aware worker is unreachable. Your source remains available.'); }
-  if (!response.ok) throw new AppError(response.status === 429 ? 429 : 503, 'The subject-aware worker rejected this request. Check its real job logs before retrying.');
-  return response.json();
+  return backendCall(cinematographyConnection(), path, init);
 }
 export async function submitCinematography(video: NormalizedVideo): Promise<Job> {
-  const engine = await call('/health') as { model?: string; mode?: string; ltxFallback?: boolean };
-  if (engine.model !== CINEMATOGRAPHY_MODEL || engine.mode !== 'subject-aware' || engine.ltxFallback !== false) {
+  const { origin } = cinematographyConnection();
+  const engine = await call('/health') as { ok?: boolean; model?: string; mode?: string; ltxFallback?: boolean };
+  if (engine.ok !== true || engine.model !== CINEMATOGRAPHY_MODEL || engine.mode !== 'subject-aware' || engine.ltxFallback !== false) {
     throw new AppError(503, 'This endpoint is not the subject-aware engine. No LTX job was submitted.');
   }
   const body = new FormData();
@@ -41,7 +36,7 @@ export async function submitCinematography(video: NormalizedVideo): Promise<Job>
   const data = await call('/v1/jobs', { method: 'POST', body }) as { id?: string };
   if (!data.id || !/^[0-9a-f]{24}$/.test(data.id)) throw new AppError(502, 'Invalid subject-aware job identifier.');
   const job: Omit<Job, 'token'> = { id: data.id, state: 'queued', createdAt: Date.now(), treatment: 'subject-aware' as TreatmentId,
-    model: CINEMATOGRAPHY_MODEL, sourceUrl: '', config: { mode: 'subject-aware', sourceWidth: video.width,
+    model: CINEMATOGRAPHY_MODEL, sourceUrl: '', config: { mode: 'subject-aware', backendOrigin: origin, sourceWidth: video.width,
       sourceHeight: video.height, sourceConditioning: 'per-input IC-Light reference + automatic person masks',
       sourceSha256: createHash('sha256').update(video.bytes).digest('hex'),
       physicalRelighting: false, ltxFallbackUsed: false } };
@@ -49,6 +44,8 @@ export async function submitCinematography(video: NormalizedVideo): Promise<Job>
 }
 export async function getCinematographyJob(claims: Job, token: string): Promise<Job> {
   if (!/^[0-9a-f]{24}$/.test(claims.id)) throw new AppError(400, 'Invalid subject-aware job identifier.');
+  const { origin } = cinematographyConnection();
+  assertJobOrigin(claims.config, origin);
   const data = await call('/v1/jobs/' + claims.id) as { state?: string; error?: string; videoUrl?: string;
     inferenceSeconds?: number; config?: Record<string, unknown> };
   const job = { ...claims, token };
@@ -62,8 +59,8 @@ export async function getCinematographyJob(claims: Job, token: string): Promise<
       || !sourceMatches) {
     throw new AppError(502, 'The worker result does not verify a new AI reference for this input.');
   }
-  const videoUrl = trustedMediaUrl(data.videoUrl);
+  const videoUrl = trustedMediaUrl(data.videoUrl, origin, claims.id);
   return { ...job, state: 'succeeded', videoUrl, config: { ...job.config, ...data.config },
     inferenceSeconds: data.inferenceSeconds, durationSeconds: Math.round((Date.now() - claims.createdAt) / 1000),
-    exportToken: sign({ kind: 'export', url: videoUrl, id: claims.id }) };
+    exportToken: sign({ kind: 'export', url: videoUrl, id: claims.id, backendOrigin: origin }) };
 }

@@ -92,3 +92,13 @@ implemented or claimed.
 After you configure a real public worker, test health, submit an actual video,
 inspect its output, compare/play/download, then promote only after authorization.
 Mocked contract tests prove URL/transport behavior, not real GPU inference.
+
+## Verified in this sprint
+
+Both engine adapters passed mocked end-to-end contract checks on three HTTPS
+origins, including a non-default port. A genuine uploaded clip then ran through
+the same application using the two new variables over **local HTTPS**: actual
+IC-Light reference generation, status polling, origin/job/HMAC verification,
+comparison playback and export. The CPU job took 284.128 s and produced the same
+measured film hash as earlier same-input runs. Evidence: `docs/evidence/backend-v1`.
+This local TLS proof is not a deployed public GPU endpoint or a GPU benchmark.

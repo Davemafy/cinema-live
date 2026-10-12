@@ -1,0 +1,7 @@
+{
+  "scope": "Mocked terminal HTTP-410 UI test only; no render proof",
+  "lostJobBecomesFailed": true,
+  "sourceUploadEnabled": true,
+  "explicitRetryEnabled": true,
+  "automaticMigration": false
+}
