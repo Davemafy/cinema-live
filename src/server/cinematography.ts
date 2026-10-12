@@ -6,6 +6,21 @@ import { createHash } from 'node:crypto';
 
 export const CINEMATOGRAPHY_MODEL = 'cinema/ic-light-person-aware-v1';
 export function cinematographyConnection() {
+  // New hosting-neutral configuration: two separate server-only environment values.
+  // Legacy token@worker URLs remain supported for the pre-existing local demo.
+  const base = process.env.CINEMA_BACKEND_URL?.trim();
+  const bearer = process.env.CINEMA_BACKEND_TOKEN?.trim();
+  if (base || bearer) {
+    if (!base || !bearer || bearer.length < 32) throw new AppError(503, 'Configure both CINEMA_BACKEND_URL and CINEMA_BACKEND_TOKEN.');
+    let url: URL;
+    try { url = new URL(base); } catch { throw new AppError(503, 'CINEMA_BACKEND_URL is invalid.'); }
+    const local = process.env.NODE_ENV !== 'production' && process.env.CINEMA_ALLOW_LOCAL_ENGINE === 'true'
+      && ['127.0.0.1', 'localhost'].includes(url.hostname) && url.protocol === 'http:';
+    if ((!local && (url.protocol !== 'https:' || url.port || ['localhost', '127.0.0.1'].includes(url.hostname)))
+      || url.username || url.password || url.pathname !== '/' || url.search || url.hash)
+      throw new AppError(503, 'CINEMA_BACKEND_URL must be a clean HTTPS origin, without credentials or paths.');
+    return { origin: url.origin, token: bearer };
+  }
   const raw = process.env.CINEMA_CINEMATOGRAPHY_URL;
   if (!raw) throw new AppError(503, 'The subject-aware engine is not connected. This treatment cannot use the LTX fallback.');
   let url: URL;
