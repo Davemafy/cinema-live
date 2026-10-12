@@ -1,27 +1,32 @@
-# CINEMA — final demo structure (maximum 3 minutes)
+# Final CINEMA demo — 82 seconds
 
-**Evidence rule:** Label the 56-second proof as an **offline AI-image-directed appearance-transfer experiment**. Do not claim it is an end-to-end live generation from the website. The website's live GPU availability must be demonstrated or honestly stated as unavailable.
+Final asset: `submission/assets/cinema-final-demo.mp4`.
+Silent caption-led film; actual source/result footage and captured application,
+with no stock substitute, fabricated job or unlicensed soundtrack.
 
-## Recommended short demonstration — 90–120 seconds
+- **0:00–0:14:** Original/B comparison. Establish record → cinematic direction →
+  preserve performance → compare/export within the first 20 seconds. The caption
+  explicitly labels the showcase offline.
+- **0:14–0:30:** Actual CINEMA upload/preview/control footage. It reopens a
+  previously completed genuine local IC-Light job; this is not live generation.
+- **0:30–0:40:** Actual source frame and the genuinely AI-generated appearance
+  reference used for B. Generated faces are not copied into the final film.
+- **0:40–0:52:** Primary B showcase; explain bounded illumination, optical flow
+  and original-frame compositing.
+- **0:52–1:02:** Actual A/B/C technical comparison. C remains experimental;
+  visibly imperfect matte edges are disclosed and B stays the visual showcase.
+- **1:02–1:14:** Actual app playback/export of the previously completed CPU job,
+  with its measured 344.7-second processing time. Do not describe this as a new
+  live render or GPU benchmark.
+- **1:14–1:22:** Identity, performance preservation and honest public-serving
+  limitation. Source/license credit remains visible throughout.
 
-0:00–0:12 — **Hook.** Show the actual original vs treated performance immediately. Say: "What if filmmakers could explore a new cinematic look without losing their original performance?"
+Provenance: `submission/assets/demo-provenance.json` and
+`submission/assets/capture-provenance.json`; exact source/showcase/export hashes
+and real app recording scope are included. Technical evidence remains in
+`docs/evidence/subject-aware-v1` and the prior preservation evidence.
 
-0:12–0:30 — **Performance in CINEMA.** Show the existing studio, "Use sample performance" or video upload, actual source playback and treatment selection. State that browser capture and normalization are implemented.
-
-0:30–0:55 — **The AI-directed look.** Show the genuine AI-created image reference beside the original keyframe. Explain that the image model proposed amber/cool illumination but altered faces, so its generated pixels were **not** copied into the final video.
-
-0:55–1:25 — **Technical proof.** Reveal the original 854×480 5-second MP4 and the source-preserving film side by side. Say: "We derive an illumination/color field and propagate it with optical flow, compositing onto original frames. Every movement remains the source movement." Show brief architecture: Image AI → reference field → optical flow → original frames → export.
-
-1:25–1:40 — **Honest status.** LTX and Wan VACE GPU experiments ran, but their transformations degraded quality; live user-controlled image reference generation and dependable public inference are not complete. Show no mock results.
-
-1:40–2:00 — **The roadmap and credits.** Preserve CINEMA's broader cinematic-treatment identity; acknowledge licensed source and model authors; show GitHub and before/after evidence.
-
-## Existing evidence assets
-
-- `docs/evidence/preservation-v1/cinema-evidence-demo.mp4` — 56-second real evidence, not a live user run.
-- `docs/evidence/preservation-v1/treated-source.mp4` — verified 5.005-second output.
-- `docs/evidence/preservation-v1/comparison.jpg` — static beginning/middle/end comparison.
-- `docs/evidence/preservation-v1/ai-reference.png` — AI keyframe only, not generated video.
-- `docs/evidence/preservation-v1/CREDITS.md` — required license/model disclosure.
-
-**Before the cutoff:** Export and upload a <=3-minute final demo to **public YouTube**, put its public URL into Devpost, and submit. GitHub-hosted videos alone do not fulfill that requirement.
+Publication: upload this MP4 to authenticated **public YouTube**, then use that
+URL in Devpost. GitHub-hosted files alone do not satisfy the public YouTube step.
+Do not wait for experimental lighting or backend migration to publish the truthful
+entry. Follow `submission/PUBLISH.md` before 04:59 WAT on October 12, 2026.

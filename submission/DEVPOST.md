@@ -1,65 +1,136 @@
-# CINEMA — Banana Hacks 2026 submission draft
+# CINEMA — final Devpost copy
 
-**Publication status: NOT SUBMITTED.** The public app's complete live AI-render workflow has not been verified. The branch includes a real, independently inspectable offline appearance-transfer film. Do not imply that the example was generated live from a visitor's upload.
+**Status: prepared, not submitted.** Use the sections below in Devpost. Do not
+claim that the public site has a verified always-on source-preserving GPU service.
+Primary showcase: B, the actual AI-directed appearance-transfer result. C is a
+separate experimental subject-aware pipeline with imperfect matte boundaries.
+
+## Project name
+CINEMA
 
 ## Tagline
-
-A performance-first workspace for exploring cinematic treatments from a recorded take.
+Record one performance. Explore a cinematic treatment. Preserve the take. Export the film.
 
 ## Inspiration
-
-Ordinary filmmakers and student creators often have one usable performance but not the time, actors, locations or equipment to reshoot it under multiple lighting setups. Prompt-to-video products can make beautiful unrelated scenes, yet may change the performer, gestures and staging. CINEMA begins with the actual take.
+Independent and student filmmakers often have one usable performance but cannot
+keep assembling actors, lighting, costumes and locations just to explore another
+visual direction. Text-to-video can produce impressive scenes while changing the
+person, movement or staging that made the original take useful. CINEMA begins
+with the recorded performance and keeps the source available for inspection.
 
 ## What it does
+CINEMA is a camera-first browser workspace for recording or uploading a short
+performance, choosing a cinematic treatment, comparing source and result, and
+exporting an actual playable MP4. Capture, preprocessing, asynchronous job handling,
+comparison and download are implemented. Source-preserving image-AI processing
+has been exercised through the local application using real uploaded footage.
 
-CINEMA provides a web workspace to record or upload a short performance, normalize it for editing, retain the original take locally, and inspect comparison and export workflows. An asynchronous video-conditioned inference adapter exists, but reliable production GPU availability and end-to-end judge-facing generation are **not** verified.
+Our primary visual showcase is an explicitly labeled offline example: image AI
+proposes an amber/cool treatment, and optical-flow-guided appearance transfer
+applies that direction to the original frames. It preserves the actors' movement,
+framing and useful detail. It is not physically accurate relighting.
 
-We also built and **actually rendered** a source-preserving AI-directed cinematic finishing experiment. Image AI establishes a strong amber/cool appearance reference from a real performance frame. Rather than inserting generated faces or recreating all frames, CINEMA extracts a bounded low-frequency illumination/color treatment, follows motion using confidence-checked optical flow, and applies the treatment to original source pixels. The five-second MP4 visibly changes the look while retaining the original frames and movement. This is AI-derived appearance transfer—not physically accurate relighting or arbitrary scene replacement.
+We also implemented a genuine per-input IC-Light reference pipeline with automatic
+moving-person masks, independent foreground/background illumination and
+silhouette-derived geometric cues. Local upload-to-download jobs genuinely ran
+this model. Its matte halos remain visible, so we present it as technical evidence
+and use the stronger earlier appearance-transfer result as the main showcase.
+
+The existing public application is deployed, but a reliably reachable public GPU
+worker for the new source-preserving pipeline has not been established. Offline
+examples are not presented as newly generated responses to a visitor's upload.
 
 ## How we built it
+The studio uses Next.js, React, TypeScript, browser MediaRecorder and IndexedDB.
+FFprobe/FFmpeg validate and normalize recordings without cropping the composition.
+Original footage remains accessible. Signed job capabilities, genuine asynchronous
+states and MP4 export connect the interface to a separate FastAPI inference worker.
 
-The studio uses Next.js, React, TypeScript, MediaRecorder and IndexedDB. FFprobe/FFmpeg validate and normalize clips, preserving composition and supporting original and processed media playback. Job capabilities, async status handling and model adapters separate UI from compute.
+The finishing pipeline uses Python, NumPy and OpenCV. A real image-AI reference
+supplies a bounded low-frequency illumination cue. Confidence-checked optical flow
+transports the treatment while source-frame compositing preserves performance.
+The subject-aware experiment adds pretrained torchvision LRASPP-MobileNetV3 person
+segmentation, source-RGB matte refinement and IC-Light's official foreground-latent
+conditioning over an SD1.5 base. Its lighting geometry is a silhouette-based proxy,
+not reconstructed physical scene geometry. Generated faces are not copied into
+its film.
 
-The validated experimental pipeline uses a real AI-generated image as the director frame; Python, NumPy and OpenCV calculate bounded RGB changes in linear light, estimate dense motion flow, evaluate forward/backward confidence and composite onto the unmodified source frame geometry. FFmpeg encodes the original-frame-based video, retaining input timing and audio when present.
+Each source-aware job runs in an isolated process with a timeout and retained
+execution log. The worker keeps the existing /health, job-submission, status and
+signed-MP4 API contract. Provider-independent URL/token configuration lets the same
+application connect to an appropriately configured worker on another host without
+rewriting rendering code. Model selection remains explicit; a failed subject-aware
+job never silently becomes an LTX job.
 
-In parallel, real Kaggle experiments executed LTX 2B and Wan2.1 VACE 1.3B video conditioning on Tesla T4 hardware. LTX completed a four-second render in approximately 45 seconds; Wan completed 49 frames at 448×256 in approximately 224 seconds of inference. Their visual edits were not strong enough to replace the preservation-first result. CINEMA did not train either foundation model.
+CINEMA did not train or invent IC-Light, Stable Diffusion, torchvision segmentation,
+LTX or Wan VACE. Its contribution is the capture-to-reference workflow, performance
+preservation, treatment transport, engine orchestration, comparison and export.
 
-## Engineering challenges
+## Challenges we ran into
+Successful inference does not guarantee a useful cinematic result. Whole-frame
+regeneration could change actors and movements; preserving source frames improved
+control but made spatial lighting harder. Coarse people masks introduced visible
+borders under strong foreground/background contrast. We evaluated actual beginning,
+middle and end frames and retained the cleaner output instead of declaring an
+experimental treatment an improvement.
 
-A successful inference response is not the same as a convincing film. Full-frame regeneration often smoothed or degraded dancers, while conditioning on the original appearance resisted dramatic change. We separated cinematic look generation from footage preservation. Other challenges included constrained T4 memory, temporary model caches, Python/CUDA version mismatches, precomputed embedding device placement, video normalization, browser media permissions and reliable asynchronous job status.
+We also handled browser video formats, rational frame rates, constrained model
+memory, per-job errors and a repeat-job stall caused by reusing model state in a
+worker thread. Isolating each render fixed the observed success/failure queue issue.
+Temporary notebook hosting remains an availability limitation, not a solved
+production infrastructure problem.
 
-## Accomplishments — measured, not simulated
+## Accomplishments
+- A real, licensed performance and an actual AI-generated reference underpin the
+  primary 120-frame, 854×480, approximately five-second MP4.
+- The same input is available as an A/B/C comparison with all-frame inspection,
+  masks, reference images, measured timings and exact media hashes.
+- A genuine fresh-upload local app job generated its own IC-Light reference,
+  processed 48 source frames, played both videos and exported matching bytes.
+- The hardened CPU worker completed that two-second job in 344.672 seconds with
+  3.774 GiB peak process RAM. This is not a GPU-speed claim.
+- Real failure-and-retry checks succeeded after a completed model render.
+- Production build, type checks and application/Python checks are documented;
+  synthetic tests are not presented as proof of aesthetic quality.
 
-- A genuine, licensed Charleston performance was used as input.
-- A real AI-generated image establishes the cinematic reference, with image-generation provenance recorded.
-- The source-preserving pipeline rendered **120 frames at 854×480, 24000/1001 fps, approximately 5.005 seconds**.
-- The measured second CPU render took **20.808 seconds**, **excluding** image-generation time.
-- Original frames, action and detail underlie the final video; no faces or movements are regenerated in this finishing path.
-- A real 56-second offline evidence film, comparison sheet, model/source credits and exact hashes are committed to GitHub.
-- TypeScript, app security/video tests, browser-playback checks and preservation-specific Python tests cover separate aspects of correctness; passing tests do not prove aesthetic quality.
+## What we learned
+Preserving a performance and changing its visual treatment are different technical
+problems. Image AI can direct the look without replacing every face and gesture.
+A defensible demo also requires inspecting the actual exported film and clearly
+separating offline visual evidence from a currently reachable live service.
 
-**Evidence:** [5-second treated film](https://github.com/Davemafy/cinema-live/blob/experiment/preservation-aware-treatment/docs/evidence/preservation-v1/treated-source.mp4), [56-second evidence walkthrough](https://github.com/Davemafy/cinema-live/blob/experiment/preservation-aware-treatment/docs/evidence/preservation-v1/cinema-evidence-demo.mp4), [method, images and provenance](https://github.com/Davemafy/cinema-live/tree/experiment/preservation-aware-treatment/docs/evidence/preservation-v1).
-
-## Lessons learned
-
-A video transformer can render every frame successfully and still make the actual footage less useful. Creators need intentional transformation **and** preservation of their performance. Treating the AI image as a directorial reference, rather than copying its altered faces, is a more reliable first step.
-
-## Limitations and next steps
-
-The verified preservation film is an **offline experiment**, not a live visitor-generated result. Image AI is not yet connected to an always-on production endpoint. The appearance-transfer treatment is two-dimensional: it does not create new scene geometry, realistic moving shadows, weather or full physical relighting. The example has no audio; AAC preservation was tested separately. The public deployment may have unavailable temporary Kaggle compute. Videos from the experimental Wan and LTX models exhibited imperfect visual fidelity.
-
-Next: integrate user-controlled reference generation and source-preserving processing into a reliable live compute service, expand cinematography controls and preserve quality at export.
+## What's next
+Improve matte edges and temporal stability, verify the source-aware pipeline on
+GPU hardware, and establish dependable public worker hosting. Current job state
+and MP4s live on the worker; switching hosts does not migrate in-progress jobs.
+We have not implemented a distributed queue or durable unattended serving.
 
 ## Built with
+Next.js, React, TypeScript, MediaRecorder, IndexedDB, Python, NumPy, OpenCV, FFmpeg,
+FFprobe, FastAPI, IC-Light, Stable Diffusion 1.5, torchvision, LTX, Vercel, Kaggle.
 
-Next.js · React · TypeScript · MediaRecorder · IndexedDB · Python · NumPy · OpenCV optical flow · FFmpeg · FFprobe · image AI reference generation · LTX 2B and Wan VACE research · Kaggle T4 · Vercel.
+## Links for the form
+- Project: https://cinema-live-six.vercel.app
+- Public repository: https://github.com/Davemafy/cinema-live
+- Submission branch: https://github.com/Davemafy/cinema-live/tree/experiment/subject-aware-cinematography
+- Primary actual film: docs/evidence/subject-aware-v1/baseline-appearance-transfer.mp4
+- Final demonstration: submission/assets/cinema-final-demo.mp4
+- A/B/C evidence: docs/evidence/subject-aware-v1/comparison-abc.mp4
+- Technical record: docs/subject-aware-cinematography.md
+- Attribution: submission/ATTRIBUTIONS.md
+- Public YouTube demonstration URL: add after authenticated publication.
 
-**Attribution:** ARTSEDGE / The Kennedy Center, *Charleston-dance.webm*, CC BY 3.0. AI reference from OpenAI image-generation tool (specific model identifier not exposed), with exact provenance in repository. LTX by Lightricks; Wan VACE by its authors. See [CREDITS.md](https://github.com/Davemafy/cinema-live/blob/experiment/preservation-aware-treatment/docs/evidence/preservation-v1/CREDITS.md).
+## Attribution and limitations
+Source: ARTSEDGE / The Kennedy Center, Charleston-dance.webm, CC BY 3.0, excerpt
+and transcode by CINEMA. The source author does not endorse the project. Primary
+B image reference: actual OpenAI image-generation tool; the specific model name
+was not exposed, and recorded provenance remains in the repository. C uses the
+pinned IC-Light and SD1.5 checkpoints with torchvision person segmentation.
+See submission/ATTRIBUTIONS.md for model/code terms and media credits.
 
-## Submission checklist (owner must complete)
-
-- Confirm official eligibility and team/member details.
-- Publish a public YouTube video **3 minutes or less**; committed 56-second evidence draft is not a public YouTube URL.
-- Attach project URL, public GitHub URL, and screenshots showing real evidence.
-- Verify the actual Vercel deployment and describe unimplemented live inference accurately.
-- Complete and submit the Devpost form before the deadline. This file is only a draft.
+Recording is silent. Uploaded AAC audio is retained by source-aware export;
+the demonstrated performance is silent. People segmentation is coarse and not
+instance-specific. Lighting geometry and contact darkening are approximate.
+GPU execution of the new pipeline and complete public source-aware generation
+are not verified. A working website or passing test is not evidence that these
+limitations have been resolved.

@@ -254,3 +254,33 @@ local comparison/export and failure recovery, pinned single-cell GPU reproductio
 accurate submission notes. Production/LTX unchanged; no paid calls or new compute.
 Next external action: authorized public worker hosting/secure connection and
 Devpost/YouTube publication of truthful evidence. No submission is claimed.
+
+## Final delivery sprint — October 12, 2026 (WAT)
+
+P0: reviewed actual A/B/C again; B is stronger. Preserving C as technical evidence,
+not finished lighting. Final Devpost copy, attributions, exact publishing steps
+and an 82-second caption-led demo prepared. The demo uses actual original/B films,
+actual AI reference, A/B/C evidence and newly recorded local app footage. The app
+sequence explicitly reopens a genuinely completed job; no live generation is
+simulated. Public YouTube/Devpost authentication unavailable, no submission claimed.
+
+P1: minimal shared connection validation/transport added for CINEMA_BACKEND_URL
+and CINEMA_BACKEND_TOKEN, engine payloads left in LTX and subject-aware adapters.
+Independent JOB_SIGNING_SECRET preserved; derivation removed. Provider origin is
+bound into new job/export capabilities, so changing host does not poll old jobs
+on the new provider. HTTPS origins accepted without provider hostname restrictions;
+media verifies exact origin/job/path, bounded expiry and worker HMAC, redirects
+rejected. Legacy connections remain usable with the independent signing secret.
+Worker aliases support generic hosts without changing LTX inference controls.
+
+P2: 22 application/protocol tests pass, including both engines across Cloudflare,
+Modal-style and arbitrary HTTPS origins, bearer auth, all states, signed media,
+invalid connections, wrong-engine/failure/unavailable cases, stable app signatures
+and no job migration. TypeScript passes. Full build and real HTTPS local connection
+verification are next; no public GPU worker or new paid resources are available.
+Production remains unchanged. P3 cannot displace the proven B showcase or deadline.
+
+P0 final film re-encoded after removing the recorded mobile viewport transition
+from the desktop sequence. 82.0 s, SHA256 fd5bd3d8...64075; all frames decoded.
+Reviewed opener, AI reference, A/B/C segment, app playback/export and closing.
+No experimental C quality improvement claimed. Final assets preserve B as primary.
