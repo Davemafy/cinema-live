@@ -1,7 +1,7 @@
 # CINEMA — guide for judges
 
 **Website:** https://madeincinema.vercel.app  
-**Code:** https://github.com/Davemafy/cinema
+**Code:** https://github.com/Davemafy/cinema-live
 
 CINEMA is a camera/upload → treatment → comparison → MP4 export workflow. It uses the original performance as its foundation.
 

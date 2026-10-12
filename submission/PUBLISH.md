@@ -1,7 +1,7 @@
 # Publish CINEMA
 
 **Website:** https://madeincinema.vercel.app  
-**GitHub:** https://github.com/Davemafy/cinema  
+**GitHub:** https://github.com/Davemafy/cinema-live  
 **Devpost:** https://banana-hacks-1111.devpost.com/
 
 Before the deadline:

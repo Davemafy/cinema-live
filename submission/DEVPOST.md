@@ -80,7 +80,7 @@ One performance. Reimagined.
 ## Links
 
 - Website: https://madeincinema.vercel.app
-- Code: https://github.com/Davemafy/cinema
+- Code: https://github.com/Davemafy/cinema-live
 - Offline appearance-transfer (B): [video](../docs/evidence/subject-aware-v1/baseline-appearance-transfer.mp4)
 - Experimental Directed light (C): [video](../docs/evidence/subject-aware-v1/subject-aware.mp4)
 - Technical record: [subject-aware architecture and evidence](../docs/subject-aware-cinematography.md)
