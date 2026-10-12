@@ -80,7 +80,7 @@ def start_tunnel(port):
     def reader():
         try:
             for line in tunnel.stdout:
-                found = re.search(r"https://[a-z0-9-]+\\.trycloudflare\\.com", line)
+                found = re.search(r"https://[a-z0-9-]+\.trycloudflare\.com", line)
                 if found:
                     hosts.put(found.group(0))
                 elif "error" in line.lower() or "failed" in line.lower():
