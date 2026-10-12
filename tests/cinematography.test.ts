@@ -91,11 +91,12 @@ test('two-variable HTTPS backend uses bearer auth, not URL credentials', async (
 
 test('public studio health checks real worker before enabling Directed light', async () => {
   const { GET } = await import('../src/app/api/health/route');
-  const old = { url: process.env.CINEMA_BACKEND_URL, token: process.env.CINEMA_BACKEND_TOKEN };
+  const old = { url: process.env.CINEMA_BACKEND_URL, token: process.env.CINEMA_BACKEND_TOKEN, signing: process.env.JOB_SIGNING_SECRET };
   const fetchOriginal = globalThis.fetch;
   try {
     process.env.CINEMA_BACKEND_URL = 'https://subject-demo.example.com';
     process.env.CINEMA_BACKEND_TOKEN = 'temporary-test-worker-token-at-least-32-characters';
+    process.env.JOB_SIGNING_SECRET = 'test-signing-secret-for-health-check-at-least-32';
     let seenAuth = '';
     globalThis.fetch = async (url, init) => {
       assert.equal(String(url), 'https://subject-demo.example.com/health');
@@ -111,6 +112,7 @@ test('public studio health checks real worker before enabling Directed light', a
     assert.match(response.treatments['subject-aware'].reason, /offline/);
   } finally {
     globalThis.fetch = fetchOriginal;
+    if (old.signing === undefined) delete process.env.JOB_SIGNING_SECRET; else process.env.JOB_SIGNING_SECRET = old.signing;
     if (old.url === undefined) delete process.env.CINEMA_BACKEND_URL; else process.env.CINEMA_BACKEND_URL = old.url;
     if (old.token === undefined) delete process.env.CINEMA_BACKEND_TOKEN; else process.env.CINEMA_BACKEND_TOKEN = old.token;
   }
