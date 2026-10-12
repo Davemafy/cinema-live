@@ -17,6 +17,7 @@ export default function Studio() {
   const source = useObjectUrl(cinema.take?.original);
   const normalized = useObjectUrl(cinema.take?.normalized);
   const [treatment, setTreatment] = useState('noir');
+  useEffect(() => { if (!cinema.job && cinema.service?.treatments?.['subject-aware']?.available) setTreatment('subject-aware'); }, [cinema.service?.treatments?.['subject-aware']?.available, cinema.job?.token]);
   useEffect(() => { if (cinema.job) setTreatment(cinema.job.treatment); }, [cinema.job?.token]);
   const [code, setCode] = useState('');
   const [now, setNow] = useState(0);
