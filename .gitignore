@@ -10,3 +10,5 @@ artifacts/
 .DS_Store
 __pycache__/
 *.pyc
+# Regenerated locally by Next.js tooling; don't commit agent instructions.
+AGENTS.md

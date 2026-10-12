@@ -1,32 +1,24 @@
 # Media, model and code attribution
 
-Performance: ARTSEDGE, The Kennedy Center, Charleston-dance.webm.
-https://commons.wikimedia.org/wiki/File:Charleston-dance.webm
-CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
-CINEMA excerpted seconds 8–13, transcoded to H.264 and removed audio. Other short
-excerpts are taken from that clip for real upload tests. Media adaptations are
-shared under CC BY 3.0. Source authors do not endorse CINEMA.
+## Sample performance
 
-Primary showcase B: the owner's actual appearance-transfer MP4, source frames
-modulated using a real OpenAI image-generation reference and optical flow. Exact
-provenance/prompt: docs/evidence/preservation-v1/ai-provenance.json. The tool did
-not expose a specific model identifier; no one is invented here.
+ARTSEDGE / The Kennedy Center — *Charleston-dance.webm*.  
+[Wikimedia source](https://commons.wikimedia.org/wiki/File:Charleston-dance.webm) · [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
 
-Experimental C: actual IC-Light (lllyasviel/ic-light) foreground conditioning,
-SD1.5 realistic-vision-v51 and torchvision LRASPP-MobileNetV3 COCO/VOC person
-segmentation. Pinned checkpoints, input/output hashes and actual execution are
-recorded under docs/evidence/subject-aware-v1. IC-Light code is Apache-2.0;
-torchvision code is BSD-3-Clause. The SD base card specifies CreativeML Open
-RAIL-M. Code licensing alone does not establish unrestricted checkpoint licensing;
-consult model terms before commercial use.
+CINEMA uses a five-second excerpt (8–13 s), transcoded to H.264 with audio removed, as a labeled **input performance**. Further short excerpts were used for testing. The original creators do not endorse CINEMA.
 
-LTX: Lightricks. Wan VACE: its upstream authors; previous experiments are retained
-and attributed in the repository. CINEMA did not train these models. No new Wan
-render or GPU execution of C is claimed during this sprint.
+## Models and methods
 
-Final demo: actual source/result media and screen-recorded CINEMA application.
-B is explicitly an offline showcase. The app sequence reopens a previously
-completed genuine local IC-Light job; it does not simulate live generation. C is
-experimental and is not presented as finished cinematic lighting. No stock result,
-generated promotional substitute, unlicensed music or fabricated processing state
-is included. Repository code retains its existing license.
+- **B (offline showcase):** an image-AI appearance reference created with OpenAI's image-generation tool; its exact model identifier was not exposed. CINEMA applied a bounded appearance field using optical flow and original-frame compositing. [Recorded provenance](../docs/evidence/preservation-v1/ai-provenance.json).
+- **C (experimental Directed light):** [IC-Light](https://github.com/lllyasviel/IC-Light), Stable Diffusion 1.5 / realistic-vision-v51 checkpoint and torchvision LRASPP-MobileNetV3 segmentation. Details, model revisions and source/result hashes are in [the evidence record](../docs/subject-aware-cinematography.md).
+- **Other evaluated models:** Lightricks LTX and Wan VACE. CINEMA did not train these models.
+
+Model weights and checkpoint licenses may impose requirements beyond the license on the application code. IC-Light source code is Apache-2.0, torchvision code is BSD-3-Clause, and the SD base model uses CreativeML Open RAIL-M. Verify the checkpoint-specific terms before commercial use.
+
+## Demo and footage provenance
+
+B is an **offline** experiment and must not be described as the live Directed light result. C was executed through the deployed studio using a temporary Kaggle GPU with the built-in sample, and separately tested locally with another upload. C's moving subject boundaries and lighting remain imperfect.
+
+Final edited/narrated demos should clearly distinguish these outputs and credit the sample footage. This document does not claim a YouTube upload or Devpost submission.
+
+Application code is MIT-licensed; third-party software and media retain their own licenses.
