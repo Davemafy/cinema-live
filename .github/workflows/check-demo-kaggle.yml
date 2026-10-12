@@ -1,0 +1,25 @@
+name: CINEMA Kaggle demo readiness
+on:
+  push:
+    branches: ["demo/kaggle-fastapi-ready"]
+  workflow_dispatch:
+
+jobs:
+  app-and-launcher:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install Node dependencies
+        run: npm ci
+      - name: Check demo TypeScript
+        run: npm run typecheck
+      - name: Test inference worker contract
+        run: npm test
+      - name: Build CINEMA demo
+        run: npm run build
+      - name: Syntax-check Kaggle worker and launcher
+        run: python -m py_compile kaggle/start_subject_demo.py kaggle/cinematography_worker.py kaggle/experiments/run_subject_cell.py
