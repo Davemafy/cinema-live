@@ -65,7 +65,7 @@ export function trustedMediaUrl(value: string) {
   const falAllowed = u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media');
   let kaggleAllowed = false;
   try {
-    for (const configured of [process.env.CINEMA_KAGGLE_URL, process.env.CINEMA_CINEMATOGRAPHY_URL]) {
+    for (const configured of [process.env.CINEMA_BACKEND_URL, process.env.CINEMA_KAGGLE_URL, process.env.CINEMA_CINEMATOGRAPHY_URL]) {
     if (configured) {
       const backend = new URL(configured);
       kaggleAllowed ||=
