@@ -42,7 +42,7 @@ The legacy `CINEMA_KAGGLE_URL` may still configure Silver screen/LTX, separately
 4. Inspect complete original and result playback; test MP4 download.
 5. Record the real browser walkthrough and label the offline fallback as offline. If inference errors, leave the publicly viewable evidence available without pretending a new render succeeded.
 
-The first job may download several gigabytes of model weights and take minutes. Kaggle GPU inference **has not been verified** for this worker. The worker has a 30-minute per-job timeout. Jobs and videos are session-local; restarting Kaggle loses them and changes the tunnel hostname, so update the URL and redeploy again.
+The owner completed a Directed light render with the built-in sample on the temporary Kaggle worker. A fresh Kaggle session still requires a new connectivity and render check. The first job may download model weights and take minutes. The worker has a 30-minute per-job timeout. Jobs and videos are session-local; restarting Kaggle loses them and changes the tunnel hostname, so update the URL and redeploy again.
 
 ## 4. Completion checklist
 
