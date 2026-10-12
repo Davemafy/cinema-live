@@ -1,0 +1,21 @@
+name: Verify JarvisLabs deployment entrypoints
+on:
+  push:
+    branches: [deploy/jarvislabs-gpu-worker]
+  pull_request:
+    branches: [main]
+jobs:
+  static-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Check backend Python and launcher shell syntax
+        run: |
+          python -m py_compile kaggle/cinematography_worker.py
+          bash -n scripts/jarvislabs-bootstrap.sh
+          bash -n scripts/jarvislabs-serve.sh
+      - name: Check deployment invariants
+        run: python -m unittest discover -s tests -p 'test_jarvislabs_deploy.py' -v
