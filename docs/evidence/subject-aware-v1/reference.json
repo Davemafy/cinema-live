@@ -1,0 +1,23 @@
+{
+  "model": "lllyasviel/ic-light",
+  "revision": "9cad1878695f546a7fb9eaca14e2a89131ba5ffe",
+  "baseModel": "stablediffusionapi/realistic-vision-v51",
+  "baseRevision": "19e3643d7d963c156d01537188ec08f0b79a514a",
+  "seed": 20261012,
+  "requestedSteps": 20,
+  "guidance": 2.0,
+  "strength": 0.9,
+  "referenceSize": [
+    512,
+    288
+  ],
+  "sourceConditioning": "actual foreground frame + predicted person matte",
+  "prompt": "cinematic photograph, the same foreground people and clothing, dramatic warm light from the left, detailed faces, deep shadows, cool rim light, natural textures, indoor scene",
+  "inferenceSeconds": 206.131,
+  "loadAndInferenceSeconds": 221.617,
+  "device": "cpu",
+  "dtype": "torch.bfloat16",
+  "imageAiExecuted": true,
+  "sourceSha256": "db12280afa65e42db525120158495eb50e98df55d9d78089f388f1330346ab43",
+  "referenceSha256": "a00c594559b560265fcc80620a5b9f7da6e01a07725b3910614f2b4d5a0921c3"
+}

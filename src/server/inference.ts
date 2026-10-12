@@ -1,3 +1,5 @@
+import { KAGGLE_MODEL, kaggleSelected, kaggleReady, submitKaggle, getKaggleJob } from './kaggle';
+import { CINEMATOGRAPHY_MODEL, cinematographyReady, submitCinematography, getCinematographyJob } from './cinematography';
 import { fal } from '@fal-ai/client';
 import { randomInt } from 'node:crypto';
 import { MODEL, TREATMENTS, type Job, type TreatmentId } from '@/lib/contracts';
@@ -6,24 +8,38 @@ import { sign, trustedMediaUrl, verify } from './security';
 import type { NormalizedVideo } from './video';
 
 export function readiness() {
-  const reason = !process.env.FAL_KEY ? 'The inference provider is not connected yet.'
-    : !process.env.JOB_SIGNING_SECRET || process.env.JOB_SIGNING_SECRET.length < 32 ? 'Job security is not configured.'
-    : process.env.INFERENCE_ENABLED !== 'true' ? 'AI rendering is disabled until a compute budget is authorized.' : undefined;
-  return { inferenceAvailable: !reason, model: MODEL, reason, renderCodeRequired: Boolean(process.env.CINEMA_RENDER_CODE) };
+  const isKaggle = kaggleSelected();
+  const providerReady = isKaggle ? kaggleReady() : Boolean(process.env.FAL_KEY);
+  const secretConfigured = Boolean(process.env.JOB_SIGNING_SECRET && process.env.JOB_SIGNING_SECRET.length >= 32);
+  const reason = !providerReady
+    ? (isKaggle ? 'Set CINEMA_KAGGLE_URL to the private token@tunnel URL.' : 'The inference provider is not connected yet.')
+    : !secretConfigured && !isKaggle ? 'Job security is not configured.'
+    : process.env.INFERENCE_ENABLED !== 'true' && !isKaggle
+      ? 'AI rendering is disabled until a compute budget is authorized.' : undefined;
+  // Kaggle is a free, temporary demo worker. A configured URL alone enables
+  // inference; no paid provider flag or separate signing secret is needed.
+  const subjectReady = cinematographyReady() && (secretConfigured || kaggleReady());
+  return { inferenceAvailable: !reason, model: isKaggle ? KAGGLE_MODEL : MODEL, reason, renderCodeRequired: Boolean(process.env.CINEMA_RENDER_CODE),
+    treatments: { noir: { available: !reason, reason }, 'subject-aware': { available: subjectReady,
+      reason: subjectReady ? undefined : 'The subject-aware engine is not connected and secured. LTX cannot substitute for this treatment.' } } };
 }
-export function requireInference(request?: Request) {
+export function requireInference(request?: Request, treatmentId?: string) {
   const health = readiness();
-  if (!health.inferenceAvailable) throw new AppError(503, health.reason!);
+  if (treatmentId === 'subject-aware') {
+    if (!health.treatments['subject-aware'].available) throw new AppError(503, health.treatments['subject-aware'].reason!);
+  } else if (!health.inferenceAvailable) throw new AppError(503, health.reason!);
   if (request && process.env.CINEMA_RENDER_CODE && request.headers.get('x-cinema-render-code') !== process.env.CINEMA_RENDER_CODE) {
     throw new AppError(403, 'Enter the render access code supplied by the project owner.');
   }
-  fal.config({ credentials: process.env.FAL_KEY, retry: { maxRetries: 0 } });
+  if (treatmentId !== 'subject-aware' && !kaggleSelected()) fal.config({ credentials: process.env.FAL_KEY, retry: { maxRetries: 0 } });
 }
 type JobClaims = Job & { kind: 'job'; expires: number };
 type ExportClaims = { kind: 'export'; url: string; id: string; expires: number };
 export async function submitVideo(video: NormalizedVideo, treatmentId: string): Promise<Job> {
   const treatment = TREATMENTS.find(t => t.id === treatmentId);
   if (!treatment) throw new AppError(400, 'Choose a supported cinematic treatment.');
+  if (treatmentId === 'subject-aware') return submitCinematography(video);
+  if (kaggleSelected()) return submitKaggle(video, treatmentId);
   const sourceUrl = trustedMediaUrl(await fal.storage.upload(new File([new Uint8Array(video.bytes)], 'performance.mp4', { type: 'video/mp4' })));
   const config = {
     prompt: treatment.prompt, video_url: sourceUrl, video_strength: 0.7,
@@ -51,7 +67,9 @@ export async function submitVideo(video: NormalizedVideo, treatmentId: string): 
 }
 export async function getJob(token: string): Promise<Job> {
   const claims = verify<JobClaims>(token);
-  if (claims.kind !== 'job' || claims.model !== MODEL || !claims.id) throw new AppError(400, 'Invalid job link.');
+  if (claims.kind !== 'job' || ![MODEL, KAGGLE_MODEL, CINEMATOGRAPHY_MODEL].includes(claims.model) || !claims.id) throw new AppError(400, 'Invalid job link.');
+  if (claims.model === CINEMATOGRAPHY_MODEL) return getCinematographyJob(claims, token);
+  if (claims.model === KAGGLE_MODEL) return getKaggleJob(claims, token);
   // Status and export remain accessible if creation is subsequently disabled.
   if (!process.env.FAL_KEY) throw new AppError(503, 'The inference provider is not connected.');
   fal.config({ credentials: process.env.FAL_KEY });

@@ -1,0 +1,72 @@
+/workspace/.venvs/cinema-vace-check/lib/python3.12/site-packages/torch/amp/autocast_mode.py:266: UserWarning: User provided device_type of 'cuda', but CUDA is not available. Disabling
+  warnings.warn(
+LOADING IC-LIGHT + SD15, actual source conditioning cpu torch.bfloat16
+  0%|          | 0/19 [00:00<?, ?it/s]IC-LIGHT STEP 1 | elapsed 14.0s
+  5%|▌         | 1/19 [00:13<04:10, 13.92s/it]IC-LIGHT STEP 2 | elapsed 30.0s
+ 11%|█         | 2/19 [00:29<04:17, 15.16s/it]IC-LIGHT STEP 3 | elapsed 44.5s
+ 16%|█▌        | 3/19 [00:44<03:57, 14.86s/it]IC-LIGHT STEP 4 | elapsed 60.8s
+ 21%|██        | 4/19 [01:00<03:51, 15.42s/it]IC-LIGHT STEP 5 | elapsed 75.3s
+ 26%|██▋       | 5/19 [01:15<03:31, 15.11s/it]IC-LIGHT STEP 6 | elapsed 90.5s
+ 32%|███▏      | 6/19 [01:30<03:16, 15.13s/it]IC-LIGHT STEP 7 | elapsed 107.8s
+ 37%|███▋      | 7/19 [01:47<03:10, 15.85s/it]IC-LIGHT STEP 8 | elapsed 123.9s
+ 42%|████▏     | 8/19 [02:03<02:55, 15.93s/it]IC-LIGHT STEP 9 | elapsed 141.7s
+ 47%|████▋     | 9/19 [02:21<02:44, 16.49s/it]IC-LIGHT STEP 10 | elapsed 158.5s
+ 53%|█████▎    | 10/19 [02:38<02:29, 16.61s/it]IC-LIGHT STEP 11 | elapsed 171.5s
+ 58%|█████▊    | 11/19 [02:51<02:03, 15.48s/it]IC-LIGHT STEP 12 | elapsed 184.0s
+ 63%|██████▎   | 12/19 [03:03<01:42, 14.60s/it]IC-LIGHT STEP 13 | elapsed 195.6s
+ 68%|██████▊   | 13/19 [03:15<01:22, 13.67s/it]IC-LIGHT STEP 14 | elapsed 206.0s
+ 74%|███████▎  | 14/19 [03:25<01:03, 12.70s/it]IC-LIGHT STEP 15 | elapsed 216.4s
+ 79%|███████▉  | 15/19 [03:36<00:47, 11.98s/it]IC-LIGHT STEP 16 | elapsed 226.8s
+ 84%|████████▍ | 16/19 [03:46<00:34, 11.52s/it]IC-LIGHT STEP 17 | elapsed 237.4s
+ 89%|████████▉ | 17/19 [03:57<00:22, 11.24s/it]IC-LIGHT STEP 18 | elapsed 247.7s
+ 95%|█████████▍| 18/19 [04:07<00:10, 10.95s/it]IC-LIGHT STEP 19 | elapsed 258.0s
+100%|██████████| 19/19 [04:17<00:00, 10.76s/it]100%|██████████| 19/19 [04:17<00:00, 13.58s/it]
+REFERENCE SUBJECT IOU 0.716159123939568
+ACTUAL SUBJECT COMPOSITING 1/48
+ACTUAL SUBJECT COMPOSITING 25/48
+{
+  "mode": "subject-aware source-frame compositing",
+  "imageAi": {
+    "model": "lllyasviel/ic-light",
+    "revision": "9cad1878695f546a7fb9eaca14e2a89131ba5ffe",
+    "baseModel": "stablediffusionapi/realistic-vision-v51",
+    "baseRevision": "19e3643d7d963c156d01537188ec08f0b79a514a",
+    "seed": 20261012,
+    "requestedSteps": 20,
+    "executedDenoiseSteps": 19,
+    "guidance": 2.0,
+    "strength": 0.9,
+    "referenceSize": [
+      512,
+      288
+    ],
+    "sourceConditioning": "actual foreground frame + predicted person matte",
+    "prompt": "cinematic photograph, the same foreground people and clothing, dramatic warm light from the left, detailed faces, deep shadows, cool rim light, natural textures, indoor scene",
+    "inferenceSeconds": 268.765,
+    "loadAndInferenceSeconds": 297.782,
+    "device": "cpu",
+    "dtype": "torch.bfloat16",
+    "imageAiExecuted": true,
+    "sourceSha256": "aff5cc37108d3aea261f69ae542ac864f8593c453233b73068cc4c63dbc5ec96",
+    "referenceSha256": "395bee603439132f30553dec2e1be08a58ec41febb884d6a73fa69c87ccf9d25"
+  },
+  "segmentationModel": "torchvision/LRASPP-MobileNetV3-Large COCO-VOC person",
+  "segmentationWeightsUrl": "https://download.pytorch.org/models/lraspp_mobilenet_v3_large-d234d4ea.pth",
+  "referenceSubjectIoU": 0.716159123939568,
+  "geometry": "silhouette-derived 2.5D surface proxy; not physical relighting or metric depth",
+  "foregroundBackgroundIndependent": true,
+  "generatedFacesUsed": false,
+  "fps": "24000/1001",
+  "frames": 48,
+  "width": 854,
+  "height": 480,
+  "audio": "source has no audio",
+  "totalSeconds": 344.672,
+  "peakProcessRamGiB": 3.774,
+  "meanClippedChannelFraction": 6.813660117963396e-05,
+  "sourceSha256": "aff5cc37108d3aea261f69ae542ac864f8593c453233b73068cc4c63dbc5ec96",
+  "outputSha256": "c28dd4ffa390f193426e55cdc69cbbb915ad0bb8994f8e5736f72735c81ebec4",
+  "baselineSha256": null,
+  "visualImprovement": "unverified; inspect entire A/B/C clip",
+  "limitations": "people only; coarse segmentation edges; view-dependent geometry proxy; approximate contact darkening"
+}

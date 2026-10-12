@@ -1,103 +1,136 @@
-# CINEMA — draft submission
+# CINEMA — final Devpost copy
 
-**Status: NOT SUBMITTED. Core AI rendering is blocked; do not describe this build
-as a finished camera-to-film product until a genuine deployed render is verified.**
+**Status: prepared, not submitted.** Use the sections below in Devpost. Do not
+claim that the public site has a verified always-on source-preserving GPU service.
+Primary showcase: B, the actual AI-directed appearance-transfer result. C is a
+separate experimental subject-aware pipeline with imperfect matte boundaries.
+
+## Project name
+CINEMA
 
 ## Tagline
+Record one performance. Explore a cinematic treatment. Preserve the take. Export the film.
 
-A performance-first workspace for exploring cinematic treatments from a recorded take.
+## Inspiration
+Independent and student filmmakers often have one usable performance but cannot
+keep assembling actors, lighting, costumes and locations just to explore another
+visual direction. Text-to-video can produce impressive scenes while changing the
+person, movement or staging that made the original take useful. CINEMA begins
+with the recorded performance and keeps the source available for inspection.
 
-## Inspiration and problem
+## What it does
+CINEMA is a camera-first browser workspace for recording or uploading a short
+performance, choosing a cinematic treatment, comparing source and result, and
+exporting an actual playable MP4. Capture, preprocessing, asynchronous job handling,
+comparison and download are implemented. Source-preserving image-AI processing
+has been exercised through the local application using real uploaded footage.
 
-Independent filmmakers and student productions often cannot repeatedly arrange
-actors, locations, costumes and lighting to explore a scene's visual treatment.
-A text-generated clip does not show how a particular performance might look.
-CINEMA starts with the creator's actual take and keeps that source available for
-inspection, rather than replacing it with an unrelated generated scene.
+Our primary visual showcase is an explicitly labeled offline example: image AI
+proposes an amber/cool treatment, and optical-flow-guided appearance transfer
+applies that direction to the original frames. It preserves the actors' movement,
+framing and useful detail. It is not physically accurate relighting.
 
-## What it does — current, demonstrated build
+We also implemented a genuine per-input IC-Light reference pipeline with automatic
+moving-person masks, independent foreground/background illumination and
+silhouette-derived geometric cues. Local upload-to-download jobs genuinely ran
+this model. Its matte halos remain visible, so we present it as technical evidence
+and use the stronger earlier appearance-transfer result as the main showcase.
 
-CINEMA records a short camera performance or accepts a user video, preprocesses
-it into a model-compatible MP4, previews the original, preserves it across browser
-refreshes, and downloads the original or normalized input. It includes a licensed
-human-performance sample and clear permission/upload error handling.
-
-The asynchronous full-video-conditioned LTX integration, job status, result
-comparison and generated-film download are implemented but **not demonstrated**
-because GPU provider credentials and compute authorization were unavailable.
-The production interface explicitly says AI rendering is unavailable. There are
-no filters, fake progress percentages, prerecorded outputs or simulated renders.
-
-After genuine inference is enabled and verified, update this section with the
-actual job ID, measured inference duration, observed performance fidelity and
-confirmed export behavior. Do not remove this disclosure based on a build or
-deployment alone.
+The existing public application is deployed, but a reliably reachable public GPU
+worker for the new source-preserving pipeline has not been established. Offline
+examples are not presented as newly generated responses to a visitor's upload.
 
 ## How we built it
+The studio uses Next.js, React, TypeScript, browser MediaRecorder and IndexedDB.
+FFprobe/FFmpeg validate and normalize recordings without cropping the composition.
+Original footage remains accessible. Signed job capabilities, genuine asynchronous
+states and MP4 export connect the interface to a separate FastAPI inference worker.
 
-The application uses TypeScript, React and Next.js. Browser MediaRecorder captures
-the take. FFprobe validates video containers and FFmpeg trims, scales, pads and
-normalizes them to H.264 at 24 fps. Source preservation and recovery use IndexedDB.
+The finishing pipeline uses Python, NumPy and OpenCV. A real image-AI reference
+supplies a bounded low-frequency illumination cue. Confidence-checked optical flow
+transports the treatment while source-frame compositing preserves performance.
+The subject-aware experiment adds pretrained torchvision LRASPP-MobileNetV3 person
+segmentation, source-RGB matte refinement and IC-Light's official foreground-latent
+conditioning over an SD1.5 base. Its lighting geometry is a silhouette-based proxy,
+not reconstructed physical scene geometry. Generated faces are not copied into
+its film.
 
-The selected inference endpoint is Lightricks LTX-2.3 22B Distilled video-to-video,
-served asynchronously on fal. The adapter uploads the entire normalized clip,
-submits a fixed cinematic prompt and documented video conditioning control, and
-tracks real provider queue states. Signed job capabilities permit recovery without
-accounts or a database. Export streams the provider's MP4 through the server.
+Each source-aware job runs in an isolated process with a timeout and retained
+execution log. The worker keeps the existing /health, job-submission, status and
+signed-MP4 API contract. Provider-independent URL/token configuration lets the same
+application connect to an appropriately configured worker on another host without
+rewriting rendering code. Model selection remains explicit; a failed subject-aware
+job never silently becomes an LTX job.
 
-CINEMA contributes capture, format normalization, source preservation, treatment
-selection, job orchestration, recovery, comparison and export UX. The underlying
-generative model is existing work by Lightricks; CINEMA did not train or invent it.
+CINEMA did not train or invent IC-Light, Stable Diffusion, torchvision segmentation,
+LTX or Wan VACE. Its contribution is the capture-to-reference workflow, performance
+preservation, treatment transport, engine orchestration, comparison and export.
 
-## Design process
+## Challenges we ran into
+Successful inference does not guarantee a useful cinematic result. Whole-frame
+regeneration could change actors and movements; preserving source frames improved
+control but made spatial lighting harder. Coarse people masks introduced visible
+borders under strong foreground/background contrast. We evaluated actual beginning,
+middle and end frames and retained the cleaner output instead of declaring an
+experimental treatment an improvement.
 
-The temporary interface emphasizes footage, legible controls and truthful service
-states. Capture, storage, provider integration and design tokens are separate,
-so a subsequent verified UI reference harvest can change presentation without
-rewriting the pipeline. No marketing landing page replaces the studio workflow.
+We also handled browser video formats, rational frame rates, constrained model
+memory, per-job errors and a repeat-job stall caused by reusing model state in a
+worker thread. Isolating each render fixed the observed success/failure queue issue.
+Temporary notebook hosting remains an availability limitation, not a solved
+production infrastructure problem.
 
-## Challenges
+## Accomplishments
+- A real, licensed performance and an actual AI-generated reference underpin the
+  primary 120-frame, 854×480, approximately five-second MP4.
+- The same input is available as an A/B/C comparison with all-frame inspection,
+  masks, reference images, measured timings and exact media hashes.
+- A genuine fresh-upload local app job generated its own IC-Light reference,
+  processed 48 source frames, played both videos and exported matching bytes.
+- The hardened CPU worker completed that two-second job in 344.672 seconds with
+  3.774 GiB peak process RAM. This is not a GPU-speed claim.
+- Real failure-and-retry checks succeeded after a completed model render.
+- Production build, type checks and application/Python checks are documented;
+  synthetic tests are not presented as proof of aesthetic quality.
 
-Browser recordings can have WebM containers with no duration metadata, and host
-request limits constrain upload size. The pipeline bounds decoding to five seconds
-and applies a 4 MB upload limit. An origin mismatch caused by Next's internal bind
-address was found through browser testing and corrected. Provider SDK retries
-were removed from paid submission to avoid duplicate jobs after network errors.
+## What we learned
+Preserving a performance and changing its visual treatment are different technical
+problems. Image AI can direct the look without replacing every face and gesture.
+A defensible demo also requires inspecting the actual exported film and clearly
+separating offline visual evidence from a currently reachable live service.
 
-The external blocker is missing authorized GPU inference access. The team did not
-fabricate a successful render or claim a CPU-only model execution.
-
-## Accomplishments and verification
-
-Production build/type checking and seven integration/security tests pass. Browser
-checks cover real MediaRecorder capture with an emulated camera, a licensed human
-performance upload, MP4 normalization/playback, source download, IndexedDB refresh
-recovery, invalid-file recovery and desktop/mobile layouts. Physical-camera
-testing, AI cinematic quality and the complete deployed result/export journey
-remain unverified.
-
-## Limits
-
-Five-second model input; uploads under 4 MB; a single browser-local take; silent
-camera recording and silent AI output; no exact facial-identity guarantee; no
-long-term media retention guarantee. Rate limiting is per function instance and
-does not replace provider spending caps.
+## What's next
+Improve matte edges and temporal stability, verify the source-aware pipeline on
+GPU hardware, and establish dependable public worker hosting. Current job state
+and MP4s live on the worker; switching hosts does not migrate in-progress jobs.
+We have not implemented a distributed queue or durable unattended serving.
 
 ## Built with
+Next.js, React, TypeScript, MediaRecorder, IndexedDB, Python, NumPy, OpenCV, FFmpeg,
+FFprobe, FastAPI, IC-Light, Stable Diffusion 1.5, torchvision, LTX, Vercel, Kaggle.
 
-TypeScript, React, Next.js, MediaRecorder, IndexedDB, FFmpeg, FFprobe, fal API,
-Lightricks LTX-2.3 Distilled, Vercel.
+## Links for the form
+- Project: https://cinema-live-six.vercel.app
+- Public repository: https://github.com/Davemafy/cinema-live
+- Submission branch: https://github.com/Davemafy/cinema-live/tree/experiment/subject-aware-cinematography
+- Primary actual film: docs/evidence/subject-aware-v1/baseline-appearance-transfer.mp4
+- Final demonstration: submission/assets/cinema-final-demo.mp4
+- A/B/C evidence: docs/evidence/subject-aware-v1/comparison-abc.mp4
+- Technical record: docs/subject-aware-cinematography.md
+- Attribution: submission/ATTRIBUTIONS.md
+- Public YouTube demonstration URL: add after authenticated publication.
 
-Repository: https://github.com/Davemafy/cinema-live
+## Attribution and limitations
+Source: ARTSEDGE / The Kennedy Center, Charleston-dance.webm, CC BY 3.0, excerpt
+and transcode by CINEMA. The source author does not endorse the project. Primary
+B image reference: actual OpenAI image-generation tool; the specific model name
+was not exposed, and recorded provenance remains in the repository. C uses the
+pinned IC-Light and SD1.5 checkpoints with torchvision person segmentation.
+See submission/ATTRIBUTIONS.md for model/code terms and media credits.
 
-Production URL and screenshot links: see `WORKLOG.md` after deployment verification.
-
-## Required final submission fields
-
-The official event page requires listed team members, a public YouTube video of
-three minutes or less, a project description and GitHub source. Team identity,
-eligibility and authenticated Devpost/YouTube access have not been supplied.
-A local demo file alone does not satisfy its public YouTube requirement.
-
-Official event: https://banana-hacks-1111.devpost.com/
-Work deadline supplied by owner: 2026-10-12 03:59 UTC (04:59 WAT).
+Recording is silent. Uploaded AAC audio is retained by source-aware export;
+the demonstrated performance is silent. People segmentation is coarse and not
+instance-specific. Lighting geometry and contact darkening are approximate.
+GPU execution of the new pipeline and complete public source-aware generation
+are not verified. A working website or passing test is not evidence that these
+limitations have been resolved.

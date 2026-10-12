@@ -1,0 +1,19 @@
+{
+  "durationSeconds": 82.0,
+  "first20Seconds": "Original/B actual film and core promise with offline disclosure",
+  "primaryShowcase": "B; C technical evidence only",
+  "actualAppCapture": {
+    "scope": "Actual local application footage: upload/preview followed by re-opened previously completed actual IC-Light job; no new live render in this screen capture",
+    "job": "946ef3623ea9ed568fe5e004",
+    "sourceSha256": "aff5cc37108d3aea261f69ae542ac864f8593c453233b73068cc4c63dbc5ec96",
+    "resultSha256": "c28dd4ffa390f193426e55cdc69cbbb915ad0bb8994f8e5736f72735c81ebec4",
+    "measuredPriorProcessingSeconds": 344.672,
+    "pageErrors": []
+  },
+  "demoSha256": "fd5bd3d8a2edfd31154352733f1f444fa8beea5d4d71b015345aa6efc2a64075",
+  "sourceSha256": "db12280afa65e42db525120158495eb50e98df55d9d78089f388f1330346ab43",
+  "showcaseSha256": "396a74cb32d2a2c1aad5fb9d3f43eca0f5c3e6b33f9bbcf8580ef3ebe80afc51",
+  "decodedAllFrames": true,
+  "publicLiveSourceAwareRenderingVerified": false,
+  "devpostSubmitted": false
+}

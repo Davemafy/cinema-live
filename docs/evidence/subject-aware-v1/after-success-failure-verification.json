@@ -1,0 +1,8 @@
+{
+  "diagnostic": "Synthetic empty clip tests error recovery only; no AI quality claim",
+  "genuineWorkerFailure": "No visible person detected; no image render attempted",
+  "retryEnabled": true,
+  "ltxFallbackUsed": false,
+  "afterGenuineSuccessfulImageAiJob": true,
+  "successfulJob": "946ef3623ea9ed568fe5e004"
+}

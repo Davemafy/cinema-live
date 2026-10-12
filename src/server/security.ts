@@ -1,4 +1,4 @@
-import { createHmac, timingSafeEqual } from 'node:crypto';
+import { createHash, createHmac, timingSafeEqual } from 'node:crypto';
 import { AppError } from './errors';
 
 const buckets = new Map<string, { count: number; until: number }>();
@@ -24,10 +24,25 @@ export function sameOrigin(request: Request) {
   if (!['http:', 'https:'].includes(originUrl.protocol) || originUrl.host !== host) throw new AppError(403, 'Please submit from the CINEMA application.');
 }
 function key() {
-  const value = process.env.JOB_SIGNING_SECRET;
-  if (!value || value.length < 32) throw new AppError(503, 'Job security is not configured on this deployment.');
-  return value;
+  const configured = process.env.JOB_SIGNING_SECRET;
+  if (configured && configured.length >= 32) return configured;
+
+  // Ephemeral Kaggle demo only: the same secret inside the private URL
+  // can back job signing without asking for another env variable.
+  // This is never shipped to clients. Existing configured keys take priority.
+  const raw = process.env.CINEMA_KAGGLE_URL;
+  if (raw) {
+    try {
+      const url = new URL(raw);
+      const token = process.env.CINEMA_KAGGLE_TOKEN?.trim() || decodeURIComponent(url.username);
+      if (url.protocol === 'https:' && token.length >= 32 && url.hostname.endsWith('.trycloudflare.com')) {
+        return createHash('sha256').update('cinema-kaggle-job-signing:' + token).digest('hex');
+      }
+    } catch { /* invalid demo URL */ }
+  }
+  throw new AppError(503, 'Job security is not configured on this deployment.');
 }
+
 export function sign<T extends object>(data: T): string {
   const body = Buffer.from(JSON.stringify({ ...data, expires: Date.now() + 24 * 3600_000 })).toString('base64url');
   return `${body}.${createHmac('sha256', key()).update(body).digest('base64url')}`;
@@ -47,8 +62,24 @@ export function verify<T extends { expires: number }>(token: string): T {
 }
 export function trustedMediaUrl(value: string) {
   const u = new URL(value);
-  if (u.protocol !== 'https:' || u.username || u.password || u.port || !(u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media'))) {
-    throw new AppError(502, 'The model returned an unsupported media address.');
+  const falAllowed = u.hostname === 'fal.media' || u.hostname.endsWith('.fal.media');
+  let kaggleAllowed = false;
+  try {
+    for (const configured of [process.env.CINEMA_BACKEND_URL, process.env.CINEMA_KAGGLE_URL, process.env.CINEMA_CINEMATOGRAPHY_URL]) {
+    if (configured) {
+      const backend = new URL(configured);
+      kaggleAllowed ||=
+        u.origin === backend.origin &&
+        /^\/v1\/jobs\/[0-9a-f]{24}\/video$/.test(u.pathname) &&
+        /^\d{9,12}$/.test(u.searchParams.get('e') || '') &&
+        /^[0-9a-f]{64}$/.test(u.searchParams.get('s') || '');
+    }
+    }
+  } catch { /* Invalid configuration must never open another host. */ }
+  const local = process.env.NODE_ENV !== 'production' && process.env.CINEMA_ALLOW_LOCAL_ENGINE === 'true'
+    && ['127.0.0.1', 'localhost'].includes(u.hostname) && u.protocol === 'http:' && kaggleAllowed;
+  if ((!local && (u.protocol !== 'https:' || u.port)) || u.username || u.password || !(falAllowed || kaggleAllowed)) {
+    throw new AppError(502, 'The inference provider returned an unsupported media address.');
   }
   return u.href;
 }

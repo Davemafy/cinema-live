@@ -1,0 +1,24 @@
+{
+  "actualInput": "alternate-take.mp4 (different first frame)",
+  "playback": [
+    {
+      "duration": 2.002,
+      "width": 854,
+      "height": 480,
+      "ended": true,
+      "error": null
+    },
+    {
+      "duration": 2.002,
+      "width": 854,
+      "height": 480,
+      "ended": true,
+      "error": null
+    }
+  ],
+  "mobileOverflow": false,
+  "pageErrors": [],
+  "submission": "Real browser upload submitted before final native-stream-copy change",
+  "recovery": "Original 600-second wait timed out; reattached genuinely completed worker job for playback/export",
+  "downloadMatchesWorkerSha256": "c28dd4ffa390f193426e55cdc69cbbb915ad0bb8994f8e5736f72735c81ebec4"
+}

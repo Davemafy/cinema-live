@@ -1,0 +1,25 @@
+{
+  "actualInput": "alternate-take.mp4 (different first frame)",
+  "playback": [
+    {
+      "duration": 2.002,
+      "width": 854,
+      "height": 480,
+      "ended": true,
+      "error": null
+    },
+    {
+      "duration": 2.002,
+      "width": 854,
+      "height": 480,
+      "ended": true,
+      "error": null
+    }
+  ],
+  "mobileOverflow": false,
+  "pageErrors": [],
+  "genuineFreshSubmission": true,
+  "recoveryNeeded": false,
+  "downloadSha256": "c28dd4ffa390f193426e55cdc69cbbb915ad0bb8994f8e5736f72735c81ebec4",
+  "matchesPreviousGenuineRun": true
+}

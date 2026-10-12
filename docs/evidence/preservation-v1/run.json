@@ -1,0 +1,43 @@
+{
+  "mode": "AI-derived low-frequency illumination/color transfer; not physical relighting",
+  "videoDiffusionUsed": false,
+  "originalFramesUsed": true,
+  "sourceGeometryAndDetailRetained": true,
+  "noFrameSynthesis": true,
+  "sourceFrames": 120,
+  "outputFrames": 120,
+  "width": 854,
+  "height": 480,
+  "fps": "24000/1001",
+  "audio": "source has no audio",
+  "seconds": 20.808,
+  "anchorFrame": 0,
+  "meanFlowConfidence": 0.9902666276242552,
+  "meanPreShoulderClippedChannelFraction": 9.378523722786017e-06,
+  "sourceSha256": "db12280afa65e42db525120158495eb50e98df55d9d78089f388f1330346ab43",
+  "outputSha256": "529578a4f5910709ac39b1132cd654749fc56e87654965b476c88ffe11275862",
+  "referenceSha256": "ce5825392cb1192c27db4cdccff0d7bbf04719afc428b9829555b8ec7db7c565",
+  "imageAi": {
+    "imageAiProvider": "OpenAI image generation tool in this session",
+    "imageAiModel": "Model identifier not exposed by the tool",
+    "imageAiPrompt": "Edit this exact source frame from a real dance performance into a deliberately directed color neo-noir cinema still. Preserve the entire original framing and aspect ratio, all six people, every person's precise pose, facial identity, glasses, clothing, positions, hands and silhouette. Do not remove, add, redraw, beautify or reposition any person or object. Preserve the original room, stage, banner and floor geometry. Change the illumination, atmosphere and photographic color only: a strong warm amber directional key from camera LEFT grazing faces and wooden floor, a restrained steel blue cool edge/backlight from camera RIGHT, deeply subdued room ambient exposure with rich detailed shadows, the back of the stage receding into darkness, a narrow believable pool of warm light around the main dancing pair. Preserve authentic skin tones, natural crisp texture without smoothing or fake grain. Meaningful cinematic contrast, natural photographic realism. No monochrome, no sepia, no grunge, no added text. Keep 16:9 composition identical. This is an AI appearance reference for a performance-preserving video treatment experiment; geometric correspondence to the supplied frame is essential.",
+    "sourceSha256": "db12280afa65e42db525120158495eb50e98df55d9d78089f388f1330346ab43",
+    "referenceSha256": "ce5825392cb1192c27db4cdccff0d7bbf04719afc428b9829555b8ec7db7c565",
+    "anchorFrame": 0,
+    "visuallyReviewed": true,
+    "referenceReview": "Strong amber/blue lighting and background separation. Generated faces and poses have drift; these pixels must NOT enter the output. Use only a blurred low-frequency appearance field on original source frames.",
+    "generationArtifact": "exec-042a0c43-182b-4d82-a573-c14f823ebe50.png",
+    "mediaLicense": "Derivative of ARTSEDGE Kennedy Center Charleston-dance, CC BY 3.0; see public/demo-attribution.txt"
+  },
+  "opencv": "4.11.0",
+  "visualReviewOfVideo": "Inspected start/middle/end and every-frame contact sheet. Full Chromium playback reached ended for original and result, 5.005 seconds each, no decode/page errors. Appearance transfer is visible; no obvious flicker in the inspected sequence. LTX/Wan baseline MP4s unavailable for direct ranking.",
+  "knownLimits": "2D appearance transfer; occlusions/drift; no new geometry or atmosphere synthesis",
+  "processingTimeExcludesImageGeneration": true,
+  "browserPlayback": {
+    "originalEnded": true,
+    "resultEnded": true,
+    "duration": 5.005,
+    "videoErrors": [],
+    "pageErrors": []
+  }
+}

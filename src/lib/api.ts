@@ -21,7 +21,7 @@ export async function prepareVideo(blob: Blob, name: string): Promise<Take> {
     trimmed: Number(response.headers.get('x-input-duration')) > 5.1 };
 }
 export async function createJob(take: Take, treatment: string, code: string): Promise<Job> {
-  const form = new FormData(); form.set('video', take.normalized, 'performance.mp4');
+  const form = new FormData(); form.set('video', treatment === 'subject-aware' ? take.original : take.normalized, treatment === 'subject-aware' ? take.name : 'performance.mp4');
   return (await check(await fetch(`/api/jobs?treatment=${encodeURIComponent(treatment)}`, {
     method: 'POST', body: form, headers: { 'x-cinema-render-code': code }, signal: AbortSignal.timeout(125_000),
   }))).json();

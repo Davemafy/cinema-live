@@ -1,0 +1,32 @@
+name: Validate Kaggle worker
+on:
+  push:
+    branches: [kaggle-worker-demo]
+  pull_request:
+    branches: [main]
+jobs:
+  python-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Parse and compile worker
+        run: python -m py_compile kaggle/serve.py
+      - name: Guard conditioning call against duplicate kwargs
+        run: |
+          python - <<'PY'
+          import ast
+          from pathlib import Path
+          t=ast.parse(Path('kaggle/serve.py').read_text())
+          matches=[n for n in ast.walk(t) if isinstance(n,ast.Call) and isinstance(n.func,ast.Name) and n.func.id=='pipe']
+          assert len(matches)==1, f"Expected one pipeline invocation, got {len(matches)}"
+          call=matches[0]
+          kwargs={k.arg:k.value for k in call.keywords}
+          assert len(kwargs)==len(call.keywords), "Duplicate pipeline argument"
+          assert 'strength' in kwargs and 'denoise_strength' in kwargs
+          v=kwargs['video']
+          assert isinstance(v,ast.List) and len(v.elts)==1 and isinstance(v.elts[0],ast.Name) and v.elts[0].id=='source_frames', 'Must condition on one full video, not one frame'
+          print("Worker AST checks passed")
+          PY

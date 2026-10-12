@@ -6,6 +6,7 @@ import { useCamera } from '@/hooks/useCamera';
 import { useObjectUrl } from '@/hooks/useObjectUrl';
 import { useDownload } from '@/hooks/useDownload';
 import { Comparison } from './Comparison';
+import { VerifiedExperiment } from './VerifiedExperiment';
 import { Arrow } from './Arrow';
 
 export default function Studio() {
@@ -16,6 +17,8 @@ export default function Studio() {
   const source = useObjectUrl(cinema.take?.original);
   const normalized = useObjectUrl(cinema.take?.normalized);
   const [treatment, setTreatment] = useState('noir');
+  useEffect(() => { if (!cinema.job && cinema.service?.treatments?.['subject-aware']?.available) setTreatment('subject-aware'); }, [cinema.service?.treatments?.['subject-aware']?.available, cinema.job?.token]);
+  useEffect(() => { if (cinema.job) setTreatment(cinema.job.treatment); }, [cinema.job?.token]);
   const [code, setCode] = useState('');
   const [now, setNow] = useState(0);
   const [playbackError, setPlaybackError] = useState('');
@@ -28,6 +31,11 @@ export default function Studio() {
   }, [cinema.active]);
   const disabled = Boolean(cinema.busy || cinema.active || camera.recording || camera.requesting || sampleLoading || !cinema.loaded);
   const succeeded = cinema.job?.state === 'succeeded';
+  const kaggle = cinema.service?.model.startsWith('kaggle/');
+  const subjectAware = treatment === 'subject-aware';
+  const treatmentStatus = cinema.service?.treatments?.[treatment];
+  const treatmentAvailable = treatmentStatus?.available ?? cinema.service?.inferenceAvailable;
+  const treatmentReason = treatmentStatus?.reason ?? cinema.service?.reason;
   const elapsed = cinema.job && now ? Math.max(0, Math.floor((now - cinema.job.createdAt) / 1000)) : 0;
   async function newTake() { cinema.reset(); setPlaybackError(''); await camera.enable(); }
   async function sample() {
@@ -63,7 +71,7 @@ export default function Studio() {
           <span className="upload-hint">MP4, WebM, MOV · max 4 MB</span>
           <input ref={input} type="file" accept="video/mp4,video/webm,video/quicktime,.mov,.m4v" className="file-input" aria-label="Upload a performance video" onChange={e => { const file = e.target.files?.[0]; if (file) { camera.release(); setPlaybackError(''); void cinema.accept(file, file.name); } e.target.value = ''; }} />
         </div>
-        <p className="capture-note">Recording is silent. Uploads keep their original audio; the AI output is silent. Clips longer than five seconds use their first five seconds. Framing is preserved without cropping.</p>
+        <p className="capture-note">Recording is silent. Uploads keep their original audio; Directed light retains uploaded audio, while LTX output is silent. Clips longer than five seconds use their first five seconds. Framing is preserved without cropping.</p>
         {cinema.take && <div className="source-links"><a href={source} download={cinema.take.name}>Download original</a><a href={normalized} download="cinema-input.mp4">Download normalized input</a>{cinema.take.trimmed && <span>Inference uses the first 5 seconds.</span>}</div>}
         {cinema.take?.name === 'demo-performance.mp4' && <p className="capture-note">Sample input: ARTSEDGE, The Kennedy Center · Charleston dance · <a href="/demo-attribution.txt" target="_blank" rel="noreferrer">CC BY 3.0 attribution</a>. Excerpt and transcode by CINEMA.</p>}
         {(camera.error || playbackError) && <p className="error" role="alert">{camera.error || playbackError}</p>}
@@ -71,21 +79,22 @@ export default function Studio() {
       <section className="treatment-panel" aria-label="Cinematic treatment and rendering">
         <p className="eyebrow">VISUAL TREATMENT</p><h2>Choose a treatment.</h2>
         <fieldset disabled={disabled}><legend className="sr-only">Choose a cinematic treatment</legend>{TREATMENTS.map(t => <label className="treatment-option" key={t.id}><input type="radio" name="treatment" checked={treatment === t.id} value={t.id} onChange={() => setTreatment(t.id)} /><span><span className="treatment-category">{t.category}</span><strong>{t.name}</strong><span className="treatment-description">{t.description}</span></span></label>)}</fieldset>
-        <p className="treatment-note">The model receives the full short clip. Motion and identity fidelity require evaluation; exact preservation is not guaranteed.</p>
+        {subjectAware ? <p className="treatment-note">A new IC-Light reference is generated from your input. Moving person masks control foreground and background separately while original frames supply faces and movement. Experimental silhouette geometry; this is not physically accurate relighting.</p> : kaggle ? <p className="treatment-note">Experimental Kaggle mode: LTX conditions on sampled frames of your source clip. Motion fidelity is approximate; the short AI-generated shot may differ from the original performance. Temporary GPU demo.</p> : <p className="treatment-note">The model receives the full short clip. Motion and identity fidelity require evaluation; exact preservation is not guaranteed.</p>}
         {cinema.service?.renderCodeRequired && <label className="code-label">Render access code<input type="password" value={code} onChange={e => setCode(e.target.value)} autoComplete="off" /></label>}
-        <button className="primary transform-button" onClick={() => cinema.transform(treatment, code)} disabled={!cinema.take || !cinema.service?.inferenceAvailable || disabled}>{cinema.busy === 'submitting' ? 'Submitting performance…' : cinema.active ? 'Rendering in progress' : cinema.job?.state === 'failed' ? 'Retry transformation' : 'Transform performance'}<Arrow /></button>
+        <button className="primary transform-button" onClick={() => cinema.transform(treatment, code)} disabled={!cinema.take || !treatmentAvailable || disabled}>{cinema.busy === 'submitting' ? 'Submitting performance…' : cinema.active ? 'Rendering in progress' : cinema.job?.state === 'failed' ? 'Retry transformation' : 'Transform performance'}<Arrow /></button>
         {!cinema.service && <p className="service-note" role="status">Checking inference connection…</p>}
-        {cinema.service && !cinema.service.inferenceAvailable && <div className="service-note"><strong>AI rendering unavailable</strong><p>{cinema.service.reason} Capture and preprocessing are available.</p><button className="text-button" onClick={cinema.reconnect}>Check connection</button></div>}
-        {cinema.service?.inferenceAvailable && <p className="service-note">Asynchronous LTX-2.3 video-to-video rendering. Your clip is sent to fal for processing. Do not close this tab during submission.</p>}
+        {cinema.service && !treatmentAvailable && <div className="service-note"><strong>AI rendering unavailable</strong><p>{treatmentReason} Capture and preprocessing are available.</p><button className="text-button" onClick={cinema.reconnect}>Check connection</button></div>}
+        {treatmentAvailable && <p className="service-note">{subjectAware ? 'Source-preserving person-aware processing. Reference generation and compositing run asynchronously. An unavailable engine produces an error; this treatment never falls back to LTX.' : kaggle ? 'Experimental video-conditioned generation on a temporary Kaggle GPU. Rendering may take several minutes; source motion may change.' : 'Asynchronous LTX-2.3 video-to-video rendering. Your clip is sent to fal for processing. Do not close this tab during submission.'}</p>}
         {cinema.active && <div className="job-status" role="status" aria-live="polite"><strong>{cinema.job?.state === 'queued' ? 'In the model queue' : 'Model is rendering your take'}</strong><p>Elapsed {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, '0')} · status comes from the provider.</p><p>You can return to this browser session after submission. No percentage estimate is available.</p></div>}
         {cinema.job?.state === 'failed' && <p className="error" role="alert">{cinema.job.error}</p>}
         {cinema.pollError && <div className="error" role="alert"><p>{cinema.pollError}</p><button onClick={cinema.checkAgain}>Check job again</button></div>}
         {cinema.error && <div className="error" role="alert"><p>{cinema.error}</p><button onClick={cinema.reconnect}>Retry connection</button></div>}
         {cinema.storageWarning && <p className="error" role="alert">{cinema.storageWarning}</p>}
-        <div className="model-credit">MODEL / LTX-2.3 DISTILLED<br />VIDEO-CONDITIONED GENERATION</div>
+        <div className="model-credit">{subjectAware ? <>MODEL / IC-LIGHT + PERSON SEGMENTATION<br />SOURCE-FRAME COMPOSITING</> : kaggle ? <>MODEL / LTX 2B · KAGGLE<br />VIDEO-FRAME CONDITIONING</> : <>MODEL / LTX-2.3 DISTILLED<br />VIDEO-CONDITIONED GENERATION</>}</div>
       </section>
     </div>
-    {succeeded && cinema.job?.videoUrl && <section className="result-section" aria-label="Rendered film"><div className="result-heading"><div><p className="eyebrow">RENDER COMPLETE</p><h2>Your cinematic take.</h2></div><div className="result-actions"><button className="primary" disabled={exporter.downloading} onClick={() => exporter.download(`/api/export?token=${encodeURIComponent(cinema.job!.exportToken!)}`, `cinema-${cinema.job!.id}.mp4`)}>{exporter.downloading ? "Downloading film…" : "Download film ↓"}</button><button onClick={() => { camera.release(); cinema.reset(); }}>New performance</button></div></div><Comparison source={normalized} result={cinema.job.videoUrl} />{exporter.error && <p className="error" role="alert">{exporter.error}</p>}<details className="render-details"><summary>Generation details</summary><p>Model: {cinema.job.model}<br />Job: {cinema.job.id}<br />Elapsed until result check: {cinema.job.durationSeconds} seconds<br />Seed: {cinema.job.seed ?? String(cinema.job.config.seed)}{cinema.job.inferenceSeconds !== undefined && <><br />Provider-measured inference: {cinema.job.inferenceSeconds.toFixed(1)} seconds</>}</p><pre>{JSON.stringify(cinema.job.config, null, 2)}</pre><p>Download promptly. Job links expire after 24 hours; provider media retention is not guaranteed.</p><button onClick={async () => { cinema.checkAgain(); }}>Refresh result status</button></details></section>}
+    {succeeded && cinema.job?.videoUrl && <section className="result-section" aria-label="Rendered film"><div className="result-heading"><div><p className="eyebrow">RENDER COMPLETE</p><h2>Your cinematic take.</h2></div><div className="result-actions"><button className="primary" disabled={exporter.downloading} onClick={() => exporter.download(`/api/export?token=${encodeURIComponent(cinema.job!.exportToken!)}`, `cinema-${cinema.job!.id}.mp4`)}>{exporter.downloading ? "Downloading film…" : "Download film ↓"}</button><button onClick={() => { camera.release(); cinema.reset(); }}>New performance</button></div></div><Comparison source={cinema.job.treatment === 'subject-aware' ? source : normalized} result={cinema.job.videoUrl} treatmentName={TREATMENTS.find(t => t.id === cinema.job!.treatment)?.name} originalSource={cinema.job.treatment === 'subject-aware'} />{exporter.error && <p className="error" role="alert">{exporter.error}</p>}<details className="render-details"><summary>Generation details</summary><p>Model: {cinema.job.model}<br />Job: {cinema.job.id}<br />Elapsed until result check: {cinema.job.durationSeconds} seconds<br />Seed: {cinema.job.seed ?? String(cinema.job.config.seed)}{cinema.job.inferenceSeconds !== undefined && <><br />Provider-measured inference: {cinema.job.inferenceSeconds.toFixed(1)} seconds</>}</p><pre>{JSON.stringify(cinema.job.config, null, 2)}</pre><p>Download promptly. Job links expire after 24 hours; Directed light video links expire after four hours and its worker must stay running.</p><button onClick={async () => { cinema.checkAgain(); }}>Refresh result status</button></details></section>}
+    <VerifiedExperiment />
     <footer><span>CINEMA / BANANA HACKS 2026</span><span>Capture. Condition. Compare. Export.</span></footer>
   </main>;
 }

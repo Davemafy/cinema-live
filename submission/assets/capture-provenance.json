@@ -1,0 +1,8 @@
+{
+  "scope": "Actual local application footage: upload/preview followed by re-opened previously completed actual IC-Light job; no new live render in this screen capture",
+  "job": "946ef3623ea9ed568fe5e004",
+  "sourceSha256": "aff5cc37108d3aea261f69ae542ac864f8593c453233b73068cc4c63dbc5ec96",
+  "resultSha256": "c28dd4ffa390f193426e55cdc69cbbb915ad0bb8994f8e5736f72735c81ebec4",
+  "measuredPriorProcessingSeconds": 344.672,
+  "pageErrors": []
+}

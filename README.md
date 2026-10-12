@@ -3,13 +3,37 @@
 Record one performance. Explore a cinematic treatment from the entire recorded
 clip. Compare the source and result, and download the film.
 
-**Current status: capture/preprocessing application implemented; genuine AI
-inference is blocked by missing compute credentials and spending authorization.**
-The app explicitly disables transformation until the provider is configured.
-No AI result, motion-preservation benchmark or complete end-to-end success is
-claimed. The interface is temporary pending the separately prepared UI harvest.
+**Subject-aware successor experiment:** actual CPU IC-Light inference, automatic
+moving-person segmentation and independent foreground/background lighting now
+work through the local app. [Real A/B/C media, measured results and limitations](docs/subject-aware-cinematography.md).
+Matte artifacts remain; overall improvement over the prior output is not proven.
+Public worker hosting is blocked and production is unchanged.
+
+**This experiment branch includes an actual AI-image-directed, source-preserving
+MP4**, with original dimensions, timing and source detail. See
+[the experiment evidence](docs/preservation-aware-experiment.md). It is an offline
+quality experiment; live image-AI serving and complete public workflow verification
+remain pending. The existing UI and working LTX Kaggle backend are preserved.
+
+The owner reports successful LTX and original-reference Wan GPU runs. A controlled
+restyled-reference Wan candidate is ready for one cached-weight Kaggle execution;
+it has not run here and has not been adopted. No fabricated output or benchmark.
 
 Repository: https://github.com/Davemafy/cinema-live
+
+## Watch the actual proof before running the demo
+
+This experiment branch includes an honest, viewer-accessible **offline before/after** preview in `src/components/VerifiedExperiment.tsx`. It is separate from the site's temporary live GPU inference.
+
+- [Watch the actual 5-second AI-directed preservation result](docs/evidence/preservation-v1/treated-source.mp4)
+- [Watch the 56-second evidence demo](docs/evidence/preservation-v1/cinema-evidence-demo.mp4)
+- [Original/result comparison](docs/evidence/preservation-v1/comparison.jpg)
+- [Technical provenance, 120-frame output, source and image credits](docs/preservation-aware-experiment.md)
+
+The experiment uses a real image-AI appearance reference and follows motion using optical-flow-guided appearance transfer. It does **not** generate new faces or body motion; it preserves original source pixels. The original production route remains an experimental LTX video-to-video integration, dependent on a live provider. A fresh public user upload is not yet proven to produce this offline treatment.
+
+**Banana Hacks finalization:** publish a public YouTube demo <= 3 minutes, finish Devpost, and check all team/eligibility details. `submission/DEVPOST.md`, `submission/DEMO-SCRIPT.md`, and `submission/JUDGES.md` hold evidence-grounded drafts. No authenticated submission has been made.
+
 
 ## Run locally
 
