@@ -17,6 +17,8 @@ jobs:
         run: npm ci
       - name: Check demo TypeScript
         run: npm run typecheck
+      - name: Install FFmpeg for real video tests
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg
       - name: Test inference worker contract
         run: npm test
       - name: Build CINEMA demo
