@@ -65,3 +65,53 @@ test('wrong engine is rejected before submission and wrong input cannot be accep
     if (previous === undefined) delete process.env.CINEMA_CINEMATOGRAPHY_URL; else process.env.CINEMA_CINEMATOGRAPHY_URL = previous;
   }
 });
+
+test('two-variable HTTPS backend uses bearer auth, not URL credentials', async () => {
+  const old = { url: process.env.CINEMA_BACKEND_URL, token: process.env.CINEMA_BACKEND_TOKEN };
+  const secret = 'temporary-test-worker-token-at-least-32-characters';
+  try {
+    process.env.CINEMA_BACKEND_URL = 'https://ephemeral-host.trycloudflare.com';
+    process.env.CINEMA_BACKEND_TOKEN = secret;
+    assert.deepEqual(cinematographyConnection(), { origin: 'https://ephemeral-host.trycloudflare.com', token: secret });
+    const signed = 'https://ephemeral-host.trycloudflare.com/v1/jobs/'+'a'.repeat(24)+'/video?e=1791760000&s='+'b'.repeat(64);
+    assert.equal(trustedMediaUrl(signed), signed);
+    assert.throws(() => trustedMediaUrl('https://ephemeral-host.trycloudflare.com/unapproved-video.mp4'));
+    process.env.CINEMA_BACKEND_URL = 'https://backend.example.com';
+    assert.equal(cinematographyConnection().origin, 'https://backend.example.com');
+    assert.throws(() => trustedMediaUrl(signed), /unsupported media/);
+    process.env.CINEMA_BACKEND_URL = 'https://user:token@backend.example.com';
+    assert.throws(() => cinematographyConnection(), /clean HTTPS origin/);
+    process.env.CINEMA_BACKEND_URL = 'http://backend.example.com';
+    assert.throws(() => cinematographyConnection(), /clean HTTPS origin/);
+  } finally {
+    if (old.url === undefined) delete process.env.CINEMA_BACKEND_URL; else process.env.CINEMA_BACKEND_URL = old.url;
+    if (old.token === undefined) delete process.env.CINEMA_BACKEND_TOKEN; else process.env.CINEMA_BACKEND_TOKEN = old.token;
+  }
+});
+
+test('public studio health checks real worker before enabling Directed light', async () => {
+  const { GET } = await import('../src/app/api/health/route');
+  const old = { url: process.env.CINEMA_BACKEND_URL, token: process.env.CINEMA_BACKEND_TOKEN };
+  const fetchOriginal = globalThis.fetch;
+  try {
+    process.env.CINEMA_BACKEND_URL = 'https://subject-demo.example.com';
+    process.env.CINEMA_BACKEND_TOKEN = 'temporary-test-worker-token-at-least-32-characters';
+    let seenAuth = '';
+    globalThis.fetch = async (url, init) => {
+      assert.equal(String(url), 'https://subject-demo.example.com/health');
+      seenAuth = new Headers(init?.headers).get('authorization') || '';
+      return Response.json({ ok: true, model: 'cinema/ic-light-person-aware-v1', mode: 'subject-aware', ltxFallback: false });
+    };
+    let response = await (await GET()).json();
+    assert.equal(response.treatments['subject-aware'].available, true);
+    assert.equal(seenAuth, 'Bearer temporary-test-worker-token-at-least-32-characters');
+    globalThis.fetch = async () => { throw new Error('Notebook stopped'); };
+    response = await (await GET()).json();
+    assert.equal(response.treatments['subject-aware'].available, false);
+    assert.match(response.treatments['subject-aware'].reason, /offline/);
+  } finally {
+    globalThis.fetch = fetchOriginal;
+    if (old.url === undefined) delete process.env.CINEMA_BACKEND_URL; else process.env.CINEMA_BACKEND_URL = old.url;
+    if (old.token === undefined) delete process.env.CINEMA_BACKEND_TOKEN; else process.env.CINEMA_BACKEND_TOKEN = old.token;
+  }
+});
